@@ -3,3 +3,11 @@
 
 [functions]
   directory = "netlify/functions"
+
+# Proxy transparente para o Backend FastAPI em HTTPS no Render.
+# Se o Render gerar uma URL diferente para o seu servico, troque apenas o dominio abaixo.
+[[redirects]]
+  from = "/api/*"
+  to = "https://mensura-api.onrender.com/api/:splat"
+  status = 200
+  force = true

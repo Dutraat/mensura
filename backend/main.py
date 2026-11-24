@@ -36,7 +36,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -64,11 +64,44 @@ async def frontend():
     return FileResponse(FRONTEND_INDEX)
 
 
-def _limpar_preco_br(texto: str) -> float:
-    limpo = re.sub(r"[^\d,]", "", str(texto or ""))
-    if not limpo:
+def _limpar_preco_br(valor) -> float:
+    # Converte textos de preco em formato BR (R$ 1.234,56) ou US ($ 1,234.56) para float.
+    if valor is None:
         return 0.0
-    return float(limpo.replace(".", "").replace(",", "."))
+    if isinstance(valor, (int, float)):
+        return round(float(valor), 2) if valor > 0 else 0.0
+    texto = str(valor).strip()
+    if not texto:
+        return 0.0
+    # Captura o primeiro bloco numerico valido com separadores de milhar/decimal
+    m = re.search(r"\d[\d.,]*", texto)
+    if not m:
+        return 0.0
+    num = m.group(0).strip(".,")
+    if "," in num and "." in num:
+        # Decide qual e o separador decimal pela ultima ocorrencia
+        if num.rfind(",") > num.rfind("."):
+            num = num.replace(".", "").replace(",", ".")
+        else:
+            num = num.replace(",", "")
+    elif "," in num:
+        partes = num.split(",")
+        if len(partes) == 2 and len(partes[1]) in (1, 2):
+            num = partes[0] + "." + partes[1]
+        else:
+            num = num.replace(",", "")
+    elif "." in num:
+        partes = num.split(".")
+        if len(partes) == 2 and len(partes[1]) in (1, 2):
+            pass  # Ja esta em formato decimal (ex: 49.90)
+        else:
+            num = num.replace(".", "")
+    try:
+        val = float(num)
+        return round(val, 2) if val > 0 else 0.0
+    except ValueError:
+        return 0.0
+
 
 
 async def buscar_google_shopping_serper(

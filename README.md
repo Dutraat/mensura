@@ -1,54 +1,28 @@
-# Mensura
+# Mensura — Busca de Preços Online e Controle de Estoque
 
-Aplicação Mensura com interface web e API FastAPI servidas juntas pelo mesmo
-processo. A interface em `frontend/index.html` não precisa de uma etapa de
-compilação separada; o backend a publica em `/` e expõe a API em `/api`.
+Aplicação web (Netlify + FastAPI no Render) para buscar ofertas reais na internet, comparar preços com histórico/melhor época e registrar compras direto no estoque.
 
-## Executar no Windows
+## 1. Como aplicar esta atualização no seu repositório (Windows)
+1. Extraia o conteúdo deste pacote na raiz da sua pasta local do repositório `mensura` (substituindo os arquivos existentes).
+2. Dê dois cliques em `aplicar_atualizacao_windows.bat`. Ele vai:
+   - Remover `iniciar_linux.sh` e qualquer serviço Linux;
+   - Corrigir o `CORSMiddleware` e a função `_limpar_preco_br` (suporte a preços BR e US) no seu `backend/main.py` sem mexer na sua lógica da Serper;
+   - Validar a sintaxe do Python automaticamente.
+3. Suba as alterações para o GitHub (`git status`, `git add .`, `git commit -m "Deploy web Render + Netlify"`, `git push`).
 
-Requer Python 3.10 ou superior. Na raiz do repositório, execute:
+## 2. Publicar o Backend em HTTPS (Render)
+1. Acesse [render.com](https://render.com) → **New +** → **Blueprint** e conecte o repositório `Dutraat/mensura`.
+2. O Render vai ler o arquivo `render.yaml` automaticamente.
+3. Em **Environment Variables**, cadastre sua `SERPER_API_KEY` (nunca coloque a chave no código).
+4. Ao finalizar o deploy, copie a URL gerada (ex.: `https://mensura-api.onrender.com`) e teste `https://SEU-SERVICO.onrender.com/api/status`.
+5. Se a URL for diferente de `https://mensura-api.onrender.com`, atualize o domínio em `frontend/netlify.toml` e faça novo push.
 
-```powershell
-.\iniciar_windows.bat
-```
+## 3. Publicar o Frontend (Netlify)
+1. No Netlify, conecte o repositório `Dutraat/mensura` com **Base directory** = `frontend` e **Publish directory** = `.`.
+2. (Opcional, para envio de relatórios por e-mail) Em **Site configuration → Environment variables**, cadastre `RESEND_API_KEY`, `EMAIL_FROM` e `APP_SECRET`.
+3. O arquivo `frontend/netlify.toml` redireciona automaticamente `/api/*` para o Render em HTTPS — sem erro de CORS nem Mixed Content.
+4. O site já inclui `manifest.json` (PWA): no Chrome ou Edge, clique no ícone de instalar na barra de endereço para usar o Mensura como aplicativo no computador ou celular.
 
-Ou configure manualmente:
-
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r backend\requirements.txt
-Copy-Item .env.example .env
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
-```
-
-Abra <http://127.0.0.1:8000/>. A documentação interativa da API fica em
-<http://127.0.0.1:8000/docs>.
-
-## Executar no Linux
-
-Na raiz do repositório, execute `bash iniciar_linux.sh`. O script cria `.venv`,
-instala `backend/requirements.txt` e inicia a aplicação em
-<http://127.0.0.1:8000/>.
-
-## Busca de preços
-
-Configure `SERPER_API_KEY` no arquivo `.env` para usar o Google Shopping via
-Serper. Sem a chave, a API usa os resultados de contingência já implementados.
-O `.env` está excluído do Git; nunca coloque chaves no frontend.
-
-Rotas principais:
-
-- `GET /api/status`
-- `GET /api/ml/buscar?q=termo&limite=10&permitir_contingencia=true`
-
-O frontend usa automaticamente a API na mesma origem. Também é possível
-configurar um endereço de API diferente na interface.
-
-## E-mail e Netlify
-
-O envio direto de relatórios depende da função Netlify em
-`frontend/netlify/functions/send-email.js`. Para esse recurso, publique a pasta
-`frontend/` no Netlify e configure `RESEND_API_KEY`, `EMAIL_FROM` e,
-opcionalmente, `APP_SECRET` como variáveis de ambiente do Netlify. Essas
-variáveis não são necessárias para executar a aplicação localmente.
+## 4. Rodar localmente no Windows
+1. Crie um arquivo `.env` na raiz (baseado em `.env.example`) com `SERPER_API_KEY=sua_chave`.
+2. Dê dois cliques em `iniciar_windows.bat`.

@@ -1,0 +1,10 @@
+{
+  "name": "Mensura — Busca de Preços e Controle de Estoque",
+  "short_name": "Mensura",
+  "description": "Compare preços online em tempo real, acompanhe a melhor época para comprar e controle seu estoque.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#2f5597",
+  "lang": "pt-BR"
+}
