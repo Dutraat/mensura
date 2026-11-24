@@ -14,8 +14,8 @@ Aplicação web (Netlify + FastAPI no Render) para buscar ofertas reais na inter
 1. Acesse [render.com](https://render.com) → **New +** → **Blueprint** e conecte o repositório `Dutraat/mensura`.
 2. O Render vai ler o arquivo `render.yaml` automaticamente.
 3. Em **Environment Variables**, cadastre sua `SERPER_API_KEY` (nunca coloque a chave no código).
-4. Ao finalizar o deploy, copie a URL gerada (ex.: `https://mensura-api.onrender.com`) e teste `https://SEU-SERVICO.onrender.com/api/status`.
-5. Se a URL for diferente de `https://mensura-api.onrender.com`, atualize o domínio em `frontend/netlify.toml` e faça novo push.
+4. O serviço deste deploy foi criado em `https://mensura-api-u9s5.onrender.com`; teste `https://mensura-api-u9s5.onrender.com/api/status`.
+5. Se você recriar o serviço e receber outra URL, atualize o domínio em `frontend/netlify.toml` e faça novo push.
 
 ## 3. Publicar o Frontend (Netlify)
 1. No Netlify, conecte o repositório `Dutraat/mensura` com **Base directory** = `frontend` e **Publish directory** = `.`.

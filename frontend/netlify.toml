@@ -8,6 +8,6 @@
 # Se o Render gerar uma URL diferente para o seu servico, troque apenas o dominio abaixo.
 [[redirects]]
   from = "/api/*"
-  to = "https://mensura-api.onrender.com/api/:splat"
+  to = "https://mensura-api-u9s5.onrender.com/api/:splat"
   status = 200
   force = true
