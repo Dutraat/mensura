@@ -1287,6 +1287,11 @@
   .mchart-tip .mt-delta.up{background:rgba(248,113,113,.22);color:#fecaca}
   .mchart-tip .mt-delta.dn{background:rgba(74,222,128,.22);color:#bbf7d0}
 
+
+  .web-site-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:#eef2f6;border:1px solid #cbd5e1;color:#1e293b;font-size:12px;font-weight:700;max-width:100%}
+  .web-site-badge .ws-dot{width:7px;height:7px;border-radius:50%;background:var(--brand);flex:0 0 auto}
+  .web-seller-sub{font-size:12px;color:var(--muted);margin-top:3px}
+
 </style>
 </head>
 <body>
@@ -3276,6 +3281,7 @@ let WSEARCH = {
   q: '',
   qty: '',
   days: 3,
+  regiao: '',
   sortBy: 'price_asc',
   apiUrl: '',
   loading: false,
@@ -3283,6 +3289,17 @@ let WSEARCH = {
   results: [],
   basket: []
 };
+try { WSEARCH.regiao = localStorage.getItem('mensura_regiao') || ''; } catch(e) {}
+
+function siteHostOf(url, fallback){
+  try {
+    let h = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+    if(h.startsWith('lista.')) h = h.slice(6);
+    else if(h.startsWith('produto.')) h = h.slice(8);
+    if(h && !h.endsWith('google.com') && !h.endsWith('google.com.br')) return h;
+  } catch(e) {}
+  return String(fallback || 'Site oficial').trim();
+}
 
 function unwrapStoreUrl(rawUrl, titulo, loja){
   let u = String(rawUrl || '').trim();
@@ -3366,7 +3383,8 @@ function buildMarketOffersFor(term, it){
 }
 
 async function runWebSearch(){
-  const qIn = $('#wsQ'), qtyIn = $('#wsQty'), dIn = $('#wsDays'), iIn = $('#wsItem'), apiIn = $('#wsApi');
+  const qIn = $('#wsQ'), qtyIn = $('#wsQty'), dIn = $('#wsDays'), iIn = $('#wsItem'), apiIn = $('#wsApi'), regIn = $('#wsRegiao');
+  if(regIn) { WSEARCH.regiao = regIn.value.trim(); try{localStorage.setItem('mensura_regiao', WSEARCH.regiao);}catch(e){} }
   if(iIn && iIn.value) WSEARCH.iid = iIn.value;
   if(qIn) WSEARCH.q = qIn.value.trim();
   if(qtyIn) { const rawQ = qtyIn.value.trim(); if(!rawQ){ WSEARCH.qty = ''; } else { const v = parseBR(rawQ); WSEARCH.qty = (!isNaN(v) && v > 0) ? v : ''; } }
@@ -3390,7 +3408,8 @@ async function runWebSearch(){
     : (useSameOrigin ? '/' : '');
   if(apiBase){
     try {
-      const res = await fetch(apiBase + 'api/ml/buscar?q=' + encodeURIComponent(term) + '&limite=10&permitir_contingencia=false');
+      const regParam = WSEARCH.regiao ? ('&regiao=' + encodeURIComponent(WSEARCH.regiao)) : '';
+      const res = await fetch(apiBase + 'api/ml/buscar?q=' + encodeURIComponent(term) + '&limite=10&permitir_contingencia=false' + regParam);
       if(res.ok){
         const payload = await res.json();
         const rows = Array.isArray(payload) ? payload : (Array.isArray(payload && payload.ofertas) ? payload.ofertas : (Array.isArray(payload && payload.resultados) ? payload.resultados : []));
@@ -3407,6 +3426,7 @@ async function runWebSearch(){
               days: Number(p.prazo_estimado_dias) > 0 ? Number(p.prazo_estimado_dias) : (WSEARCH.days || 3),
               pay: p.logistica_full ? ('Full • ' + freteTxt) : freteTxt,
               link_compra: unwrapStoreUrl(p.link_compra || '', p.titulo || term, lojaNome + vend),
+              site: p.site_dominio || siteHostOf(unwrapStoreUrl(p.link_compra || '', p.titulo || term, lojaNome + vend), lojaNome),
               url_imagem: p.url_imagem || null
             };
           }).filter(x => x.preco > 0);
@@ -3443,8 +3463,9 @@ async function runWebSearch(){
   WSEARCH.searched = true;
   WSEARCH.results = list.sort((a,b) => (Number(a.preco) || 0) - (Number(b.preco) || 0));
   WSEARCH.loading = false;
+  const regLabel = WSEARCH.regiao ? ` • Região: ${WSEARCH.regiao}` : ' • Brasil todo';
   WSEARCH.sourceMsg = WSEARCH.results.length
-    ? `${WSEARCH.results.length} ofertas reais encontradas (${sourceLabel}) — ordenadas por preço`
+    ? `${WSEARCH.results.length} ofertas reais encontradas (${sourceLabel}${regLabel}) — ordenadas por preço`
     : `Nenhuma oferta real encontrada para "${term}" no momento.`;
   if($('#wsResults')) drawWebSearchBody();
 }
@@ -3565,19 +3586,22 @@ function drawWebSearchBody(){
       offTag = `<span class="web-off-badge up">+${pct(diffPct)} acima da última compra</span>`;
     }
 
+    const siteName = siteHostOf(o.link_compra, o.site || o.loja);
+    const showSeller = o.loja && norm(o.loja) !== norm(siteName) && !norm(siteName).includes(norm(o.loja));
     return `<div class="web-ocard ${isBest ? 'best' : ''} ${inBasket ? 'picked' : ''}">
       <div class="row" style="gap:6px">
-        <span class="chip ${isBest ? 'ok' : 'info'}">${esc(o.loja)}</span>
+        <span class="web-site-badge" title="Site onde a oferta está anunciada"><span class="ws-dot"></span><span>Site: ${esc(siteName)}</span></span>
         ${isBest ? '<span class="pill ok">★ Menor preço</span>' : ''}
         ${o.prevBought ? '<span class="chip blue">✓ Comprou da última vez</span>' : ''}
         <span class="sp"></span>
-        ${o.link_compra ? `<a href="${esc(o.link_compra)}" target="_blank" rel="noopener noreferrer" class="small" style="font-weight:700">Ver anúncio ↗</a>` : ''}
+        ${o.link_compra ? `<a href="${esc(o.link_compra)}" target="_blank" rel="noopener noreferrer" class="small" style="font-weight:700">Ir ao site ↗</a>` : ''}
       </div>
 
       <div class="web-ocard-head">
         ${o.url_imagem ? `<img class="web-ocard-img" src="${esc(o.url_imagem)}" alt="">` : `<div class="web-ocard-img">📦</div>`}
         <div style="flex:1;min-width:0">
           <div class="web-ocard-title">${esc(o.titulo)}</div>
+          ${showSeller ? `<div class="web-seller-sub">Fornecedor/Loja: <b>${esc(o.loja)}</b></div>` : ''}
           <div class="web-delivery-pill ${isFast ? 'fast' : ''}">
             ${sym('truck')} <span>Chega em ${dDays} ${dDays===1?'dia':'dias'}</span>
           </div>
@@ -3685,6 +3709,22 @@ screens.search = () => ({
           <span class="muted">dias</span>
         </label>
         <label class="ws-filter-chip">
+          <span>Região:</span>
+          <input id="wsRegiao" list="wsRegioesList" value="${esc(WSEARCH.regiao)}" placeholder="Brasil todo" style="width:128px">
+          <datalist id="wsRegioesList">
+            <option value="Recife, PE">
+            <option value="São Paulo, SP">
+            <option value="Rio de Janeiro, RJ">
+            <option value="Belo Horizonte, MG">
+            <option value="Salvador, BA">
+            <option value="Fortaleza, CE">
+            <option value="Curitiba, PR">
+            <option value="Porto Alegre, RS">
+            <option value="Brasília, DF">
+            <option value="Campinas, SP">
+          </datalist>
+        </label>
+        <label class="ws-filter-chip">
           <span>Ordenar:</span>
           <select id="wsSort" style="border:0;background:transparent;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;outline:none;padding:0 2px">
             <option value="price_asc" ${WSEARCH.sortBy==='price_asc'?'selected':''}>Menor preço</option>
@@ -3751,6 +3791,22 @@ screens.search = () => ({
       WSEARCH.sortBy = sortEl.value || 'price_asc';
       drawWebSearchBody();
     });
+    const regEl = $('#wsRegiao');
+    if(regEl){
+      regEl.addEventListener('change', () => {
+        WSEARCH.regiao = regEl.value.trim();
+        try{localStorage.setItem('mensura_regiao', WSEARCH.regiao);}catch(e){}
+        if(WSEARCH.q && WSEARCH.searched) runWebSearch();
+      });
+      regEl.addEventListener('keydown', e => {
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          WSEARCH.regiao = regEl.value.trim();
+          try{localStorage.setItem('mensura_regiao', WSEARCH.regiao);}catch(e){}
+          if(WSEARCH.q) runWebSearch();
+        }
+      });
+    }
     drawWebSearchBody();
   }
 });

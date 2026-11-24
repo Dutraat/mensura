@@ -92,12 +92,13 @@ class CacheBuscas:
             con.commit()
 
     @staticmethod
-    def _normalizar_chave(termo: str, limite: str) -> str:
+    def _normalizar_chave(termo: str, limite: str, regiao: str = "") -> str:
         t = re.sub(r"\s+", " ", (termo or "").strip().lower())
-        return hashlib.sha256(f"v2|{t}|{limite}".encode("utf-8")).hexdigest()
+        r = re.sub(r"\s+", " ", (regiao or "").strip().lower())
+        return hashlib.sha256(f"v3|{t}|{limite}|{r}".encode("utf-8")).hexdigest()
 
-    def obter(self, termo: str, limite: str = "10") -> Any | None:
-        chave = self._normalizar_chave(termo, limite)
+    def obter(self, termo: str, limite: str = "10", regiao: str = "") -> Any | None:
+        chave = self._normalizar_chave(termo, limite, regiao)
         agora = time.time()
         with self._conn() as con:
             row = con.execute(
@@ -118,8 +119,8 @@ class CacheBuscas:
         except json.JSONDecodeError:
             return None
 
-    def salvar(self, termo: str, limite: str, dados: Any) -> None:
-        chave = self._normalizar_chave(termo, limite)
+    def salvar(self, termo: str, limite: str, dados: Any, regiao: str = "") -> None:
+        chave = self._normalizar_chave(termo, limite, regiao)
         payload_str = json.dumps(dados, ensure_ascii=False)
         with self._conn() as con:
             con.execute(
@@ -357,11 +358,21 @@ def normalizar_e_ordenar_payload_busca(data: Any) -> Any:
             if preco_num > 0:
                 item["preco"] = preco_num
             loja_txt = f"{item.get('loja_origem') or ''} {item.get('vendedor') or ''} {item.get('loja') or ''}"
-            item["link_compra"] = resolver_link_direto(
+            link_final = resolver_link_direto(
                 str(item.get("link_compra") or ""),
                 str(item.get("titulo") or ""),
                 loja_txt,
             )
+            item["link_compra"] = link_final
+            try:
+                host = (urlparse(link_final).netloc or "").lower().replace("www.", "")
+                if host.startswith("lista."):
+                    host = host[6:]
+                elif host.startswith("produto."):
+                    host = host[8:]
+                item["site_dominio"] = host or str(item.get("loja_origem") or "Site oficial")
+            except Exception:
+                item["site_dominio"] = str(item.get("loja_origem") or "Site oficial")
             validos.append(item)
         validos.sort(key=lambda x: float(x.get("preco") or 999999999))
         return validos
@@ -385,9 +396,10 @@ def registrar_rotas_e_cache(app: FastAPI) -> CacheBuscas:
         if request.method == "GET" and request.url.path == "/api/ml/buscar":
             termo = (request.query_params.get("q") or "").strip()
             limite = request.query_params.get("limite", "10")
+            regiao = (request.query_params.get("regiao") or "").strip()
             ignorar = (request.query_params.get("sem_cache") or "").lower() in ("1", "true", "sim")
             if termo and not ignorar:
-                cached = cache.obter(termo, limite)
+                cached = cache.obter(termo, limite, regiao)
                 if cached is not None:
                     return JSONResponse(
                         content=cached,
@@ -404,7 +416,7 @@ def registrar_rotas_e_cache(app: FastAPI) -> CacheBuscas:
                         isinstance(data, dict) and bool(data.get("ofertas") or data.get("resultados"))
                     )
                     if tem_dados:
-                        cache.salvar(termo, limite, data)
+                        cache.salvar(termo, limite, data, regiao)
                     body = json.dumps(data, ensure_ascii=False).encode("utf-8")
                 except Exception:
                     pass
