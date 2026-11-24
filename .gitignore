@@ -7,5 +7,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 *.bak
+.mensura_cache.db
+backend/.mensura_cache.db
 .DS_Store
 Thumbs.db

@@ -10,10 +10,12 @@ from urllib.parse import quote_plus, urljoin, urlparse
 
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
+from backend.mensura_cache_jsonld import registrar_rotas_e_cache
 
 load_dotenv()
 
@@ -575,6 +577,7 @@ async def status_api():
 
 @app.get("/api/ml/buscar", response_model=List[OfertaWeb])
 async def rota_buscar_ml(
+    response: Response,
     q: str = Query(..., min_length=2, description="Produto para pesquisar"),
     limite: int = Query(10, ge=1, le=50),
     permitir_contingencia: bool = Query(
@@ -588,6 +591,7 @@ async def rota_buscar_ml(
     if api_key:
         try:
             ofertas = await buscar_google_shopping_serper(q, limite)
+            response.headers["X-Mensura-Search-Source"] = "serper"
         except Exception as e:
             serper_falhou = True
             print(f"[ERRO SERPER SHOPPING] {e}")
@@ -597,6 +601,10 @@ async def rota_buscar_ml(
     if serper_falhou and permitir_contingencia:
         print(f"[AVISO SERPER] Usando contingência para '{q}'.")
         ofertas = _gerar_fallback_simulacao_realista(q, limite)
+        response.headers["X-Mensura-Search-Source"] = "contingencia"
 
     ofertas.sort(key=lambda x: (x.preco, not x.frete_gratis))
     return ofertas
+
+
+registrar_rotas_e_cache(app)
