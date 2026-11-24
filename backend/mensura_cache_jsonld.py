@@ -5,31 +5,23 @@ Modulo de Cache 24h (SQLite + memoria) e Extrator JSON-LD (schema.org/Product) p
 """
 from __future__ import annotations
 
-import asyncio
 import hashlib
-import ipaddress
 import json
-import logging
 import os
 import re
-import socket
 import sqlite3
 import tempfile
 import time
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import parse_qs, quote, quote_plus, unquote, urlparse
 
-from curl_cffi import CurlOpt
-from curl_cffi import requests as cffi_requests
-from curl_cffi.requests.exceptions import CurlError
+import httpx
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, Response
 
-MAX_REDIRECTS = 5
-MAX_HTML_BYTES = 5 * 1024 * 1024
-logger = logging.getLogger(__name__)
+CACHE_TTL_SEGUNDOS = int(os.getenv("MENSURA_CACHE_TTL", "86400"))  # 24 horas
 
 
 def limpar_preco_universal(valor: Any) -> float:
@@ -72,9 +64,7 @@ def limpar_preco_universal(valor: Any) -> float:
 class CacheBuscas:
     """Cache persistente em SQLite (com fallback em /tmp para Render) com TTL configuravel."""
 
-    def __init__(self, ttl_segundos: int | None = None, db_path: Path | None = None):
-        if ttl_segundos is None:
-            ttl_segundos = int(os.getenv("MENSURA_CACHE_TTL", "86400"))
+    def __init__(self, ttl_segundos: int = CACHE_TTL_SEGUNDOS, db_path: Path | None = None):
         self.ttl = max(60, int(ttl_segundos))
         self.hits = 0
         self.misses = 0
@@ -104,7 +94,7 @@ class CacheBuscas:
     @staticmethod
     def _normalizar_chave(termo: str, limite: str) -> str:
         t = re.sub(r"\s+", " ", (termo or "").strip().lower())
-        return hashlib.sha256(f"{t}|{limite}".encode("utf-8")).hexdigest()
+        return hashlib.sha256(f"v2|{t}|{limite}".encode("utf-8")).hexdigest()
 
     def obter(self, termo: str, limite: str = "10") -> Any | None:
         chave = self._normalizar_chave(termo, limite)
@@ -177,12 +167,9 @@ def _iter_objetos_jsonld(obj: Any):
 
 def _tipo_eh_produto(node: dict[str, Any]) -> bool:
     t = node.get("@type")
-    tipos = t if isinstance(t, list) else [t]
-    return any(
-        str(tipo or "").rstrip("/").rsplit("/", 1)[-1].rsplit("#", 1)[-1].lower()
-        in ("product", "productgroup")
-        for tipo in tipos
-    )
+    if isinstance(t, list):
+        return any(str(x).lower() in ("product", "productgroup") for x in t)
+    return str(t or "").lower() in ("product", "productgroup")
 
 
 def _extrair_imagem(img: Any) -> str | None:
@@ -213,7 +200,7 @@ def extrair_ofertas_jsonld_de_html(html: str, url_origem: str) -> list[dict[str,
             continue
         try:
             data = json.loads(raw)
-        except json.JSONDecodeError:
+        except Exception:
             continue
 
         for node in _iter_objetos_jsonld(data):
@@ -246,16 +233,11 @@ def extrair_ofertas_jsonld_de_html(html: str, url_origem: str) -> list[dict[str,
                 vendedor = (
                     seller.get("name")
                     if isinstance(seller, dict) and seller.get("name")
-                    else seller.strip()
-                    if isinstance(seller, str) and seller.strip()
                     else dominio
                 )
                 avail = str(off.get("availability") or "").lower()
                 disponivel = "outofstock" not in avail
-                link = urljoin(
-                    url_origem,
-                    str(off.get("url") or node.get("url") or url_origem).strip(),
-                )
+                link = str(off.get("url") or node.get("url") or url_origem).strip()
                 ofertas.append(
                     {
                         "id_externo": f"jsonld_{hashlib.md5(f'{titulo}|{preco}|{idx}'.encode()).hexdigest()[:10]}",
@@ -269,7 +251,7 @@ def extrair_ofertas_jsonld_de_html(html: str, url_origem: str) -> list[dict[str,
                         "condicao_pagamento": "Online / Pix",
                         "link_compra": link,
                         "url_imagem": url_img,
-                        "disponivel_estoque": 1 if disponivel else 0,
+                        "disponivel_estoque": disponivel,
                     }
                 )
 
@@ -277,117 +259,121 @@ def extrair_ofertas_jsonld_de_html(html: str, url_origem: str) -> list[dict[str,
     return ofertas
 
 
-def _resolver_ip_publico(url: str) -> tuple[str, int, str, bool]:
-    try:
-        parsed = urlparse(url)
-        hostname = parsed.hostname
-        port = parsed.port
-    except ValueError as exc:
-        raise ValueError("Informe uma URL valida.") from exc
-
-    if (
-        parsed.scheme not in ("http", "https")
-        or not hostname
-        or parsed.username
-        or parsed.password
-    ):
-        raise ValueError("Informe uma URL publica valida com http:// ou https://.")
-
-    port_esperada = 80 if parsed.scheme == "http" else 443
-    if port not in (None, port_esperada):
-        raise ValueError("A URL deve usar a porta padrao do protocolo.")
-    port = port or port_esperada
-
-    host = hostname.lower()
-    host_sem_ponto = host.rstrip(".")
-    if not host_sem_ponto or host_sem_ponto.endswith(
-        (".localhost", ".local", ".internal")
-    ):
-        raise ValueError("Hosts locais ou internos nao sao permitidos.")
-
-    try:
-        endereco = ipaddress.ip_address(host_sem_ponto)
-    except ValueError:
-        try:
-            registros = socket.getaddrinfo(
-                host_sem_ponto, port, family=socket.AF_INET, type=socket.SOCK_STREAM
-            )
-        except OSError as exc:
-            raise ValueError("Nao foi possivel resolver o host informado.") from exc
-        enderecos = {registro[4][0] for registro in registros}
-        if not enderecos or any(
-            not ipaddress.ip_address(ip).is_global for ip in enderecos
-        ):
-            raise ValueError("A URL precisa apontar somente para enderecos publicos.")
-        return host, port, sorted(enderecos)[0], True
-
-    if endereco.version != 4 or not endereco.is_global:
-        raise ValueError("Enderecos IP locais ou nao globais nao sao permitidos.")
-    return host, port, str(endereco), False
-
-
-def _baixar_html_publico(url: str, timeout: float) -> tuple[str, str]:
-    cabecalhos = {
+async def extrair_ofertas_jsonld(url: str, timeout: float = 10.0) -> list[dict[str, Any]]:
+    """Baixa uma pagina publica de produto/loja e extrai ofertas via JSON-LD sem custo de API."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise ValueError("Informe uma URL valida com http:// ou https://.")
+    headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
         ),
         "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
     }
+    async with httpx.AsyncClient(follow_redirects=True, timeout=timeout, headers=headers) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+        return extrair_ofertas_jsonld_de_html(resp.text, str(resp.url))
 
-    for _ in range(MAX_REDIRECTS + 1):
-        host, port, ip, precisa_fixar_ip = _resolver_ip_publico(url)
-        opcoes_curl = {}
-        if precisa_fixar_ip:
-            opcoes_curl[CurlOpt.RESOLVE] = [f"{host}:{port}:{ip}"]
 
-        with cffi_requests.Session(
-            impersonate="chrome120",
-            curl_options=opcoes_curl,
-            proxies={},
-        ) as client:
-            resposta = client.get(
-                url,
-                timeout=timeout,
-                headers=cabecalhos,
-                allow_redirects=False,
-                stream=True,
+
+
+LOJAS_DIRETAS_BR = [
+    (("mercado livre", "mercadolivre", "ml"), lambda q: f"https://lista.mercadolivre.com.br/{quote(q.replace(' ', '-'))}"),
+    (("amazon",), lambda q: f"https://www.amazon.com.br/s?k={quote_plus(q)}"),
+    (("magalu", "magazine luiza", "magazine"), lambda q: f"https://www.magazineluiza.com.br/busca/{quote(q)}/"),
+    (("shopee",), lambda q: f"https://shopee.com.br/search?keyword={quote_plus(q)}"),
+    (("americanas",), lambda q: f"https://www.americanas.com.br/busca/{quote(q)}"),
+    (("casas bahia", "casasbahia"), lambda q: f"https://www.casasbahia.com.br/{quote(q)}/b"),
+    (("carrefour",), lambda q: f"https://www.carrefour.com.br/busca/{quote(q)}"),
+    (("kalunga",), lambda q: f"https://www.kalunga.com.br/busca/1?q={quote_plus(q)}"),
+    (("leroy", "leroy merlin"), lambda q: f"https://www.leroymerlin.com.br/search?term={quote_plus(q)}"),
+    (("atacadao", "atacadão"), lambda q: f"https://www.atacadao.com.br/s?q={quote_plus(q)}"),
+    (("assai", "assaí"), lambda q: f"https://www.assai.com.br/busca?q={quote_plus(q)}"),
+    (("extra",), lambda q: f"https://www.extra.com.br/{quote(q)}/b"),
+    (("ponto", "pontofrio"), lambda q: f"https://www.pontofrio.com.br/{quote(q)}/b"),
+    (("kabum",), lambda q: f"https://www.kabum.com.br/busca/{quote(q.replace(' ', '-'))}"),
+]
+
+
+def _eh_url_google(url: str) -> bool:
+    try:
+        host = (urlparse(url).netloc or "").lower()
+    except Exception:
+        return False
+    return host == "google.com" or host.endswith(".google.com") or host.endswith(".google.com.br")
+
+
+def resolver_link_direto(url: str, titulo: str = "", loja: str = "") -> str:
+    """Remove redirecionamentos do Google e devolve o link direto da loja sempre que possivel."""
+    u = (url or "").strip()
+    if u:
+        for _ in range(3):
+            if not _eh_url_google(u):
+                return u
+            parsed = urlparse(u)
+            qs = parse_qs(parsed.query)
+            extraido = None
+            for param in ("url", "adurl", "q", "u", "dest", "continue"):
+                vals = qs.get(param)
+                if vals and vals[0].startswith(("http://", "https://")):
+                    extraido = unquote(vals[0]).strip()
+                    break
+            if extraido and extraido != u:
+                u = extraido
+                continue
+            break
+
+    if u and not _eh_url_google(u):
+        return u
+
+    # Fallback direto para a loja mencionada quando o Google Shopping so entrega link interno do Google
+    termo = (titulo or "").strip()
+    loja_l = (loja or "").lower()
+    for chaves, builder in LOJAS_DIRETAS_BR:
+        if any(k in loja_l for k in chaves):
+            return builder(termo or loja)
+
+    # Se loja for um dominio (ex: "atacadoxyz.com.br"), monta URL direta
+    m_dom = re.search(r"([a-z0-9-]+\.(?:com\.br|com|net\.br|org\.br))", loja_l)
+    if m_dom:
+        return f"https://{m_dom.group(1)}"
+
+    # Ultimo recurso: busca direta no Mercado Livre em vez de cair no Google
+    if termo:
+        return f"https://lista.mercadolivre.com.br/{quote(termo.replace(' ', '-'))}"
+    return u
+
+
+def normalizar_e_ordenar_payload_busca(data: Any) -> Any:
+    """Corrige links de compra (sem redirecionamento Google) e ordena ofertas por menor preco."""
+    def _proc_lista(items: list[Any]) -> list[Any]:
+        validos = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            preco_num = limpar_preco_universal(item.get("preco"))
+            if preco_num > 0:
+                item["preco"] = preco_num
+            loja_txt = f"{item.get('loja_origem') or ''} {item.get('vendedor') or ''} {item.get('loja') or ''}"
+            item["link_compra"] = resolver_link_direto(
+                str(item.get("link_compra") or ""),
+                str(item.get("titulo") or ""),
+                loja_txt,
             )
-            try:
-                if resposta.status_code in (301, 302, 303, 307, 308):
-                    destino = resposta.headers.get("location")
-                    if not destino:
-                        raise ValueError("Redirecionamento sem destino valido.")
-                    url = urljoin(url, destino)
-                    continue
+            validos.append(item)
+        validos.sort(key=lambda x: float(x.get("preco") or 999999999))
+        return validos
 
-                resposta.raise_for_status()
-                tamanho = resposta.headers.get("content-length")
-                if tamanho:
-                    try:
-                        tamanho_bytes = int(tamanho)
-                    except ValueError:
-                        tamanho_bytes = 0
-                    if tamanho_bytes > MAX_HTML_BYTES:
-                        raise ValueError("A pagina excede o limite de tamanho permitido.")
-
-                conteudo = bytearray()
-                for bloco in resposta.iter_content(chunk_size=65536):
-                    conteudo.extend(bloco)
-                    if len(conteudo) > MAX_HTML_BYTES:
-                        raise ValueError("A pagina excede o limite de tamanho permitido.")
-                encoding = resposta.encoding or "utf-8"
-                return bytes(conteudo).decode(encoding, errors="replace"), url
-            finally:
-                resposta.close()
-
-    raise ValueError("A URL excedeu o limite de redirecionamentos.")
-
-
-async def extrair_ofertas_jsonld(url: str, timeout: float = 10.0) -> list[dict[str, Any]]:
-    """Baixa uma pagina publica validada e extrai ofertas via JSON-LD."""
-    html, url_final = await asyncio.to_thread(_baixar_html_publico, url, timeout)
-    return extrair_ofertas_jsonld_de_html(html, url_final)
+    if isinstance(data, list):
+        return _proc_lista(data)
+    if isinstance(data, dict):
+        for k in ("ofertas", "resultados"):
+            if isinstance(data.get(k), list):
+                data[k] = _proc_lista(data[k])
+        return data
+    return data
 
 
 def registrar_rotas_e_cache(app: FastAPI) -> CacheBuscas:
@@ -408,21 +394,20 @@ def registrar_rotas_e_cache(app: FastAPI) -> CacheBuscas:
                         headers={"X-Mensura-Cache": "HIT"},
                     )
             response = await call_next(request)
-            if (
-                termo
-                and response.status_code == 200
-                and response.headers.get("X-Mensura-Search-Source") == "serper"
-            ):
+            if termo and response.status_code == 200:
                 chunks = [chunk async for chunk in response.body_iterator]
                 body = b"".join(chunks)
                 try:
                     data = json.loads(body.decode("utf-8"))
-                    if isinstance(data, list) and data:
+                    data = normalizar_e_ordenar_payload_busca(data)
+                    tem_dados = (isinstance(data, list) and len(data) > 0) or (
+                        isinstance(data, dict) and bool(data.get("ofertas") or data.get("resultados"))
+                    )
+                    if tem_dados:
                         cache.salvar(termo, limite, data)
-                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-                    logger.warning("Nao foi possivel decodificar resposta para cache: %s", exc)
-                except sqlite3.Error:
-                    logger.exception("Falha ao armazenar resultado da busca no cache")
+                    body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+                except Exception:
+                    pass
                 headers = dict(response.headers)
                 headers["X-Mensura-Cache"] = "MISS"
                 headers.pop("content-length", None)
@@ -430,7 +415,7 @@ def registrar_rotas_e_cache(app: FastAPI) -> CacheBuscas:
                     content=body,
                     status_code=response.status_code,
                     headers=headers,
-                    media_type=response.media_type,
+                    media_type=response.media_type or "application/json",
                 )
             return response
         return await call_next(request)
@@ -439,17 +424,19 @@ def registrar_rotas_e_cache(app: FastAPI) -> CacheBuscas:
     def status_cache():
         return {"ok": True, **cache.status()}
 
+    @app.delete("/api/cache/limpar")
+    def limpar_cache():
+        removidos = cache.limpar()
+        return {"ok": True, "entradas_removidas": removidos}
+
     @app.get("/api/extrair-url")
     async def extrair_url_jsonld(url: str = Query(..., description="URL publica de produto ou loja com JSON-LD")):
         try:
             ofertas = await extrair_ofertas_jsonld(url)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except CurlError as exc:
-            raise HTTPException(
-                status_code=502,
-                detail="Nao foi possivel acessar a URL informada.",
-            ) from exc
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail=f"Nao foi possivel acessar a URL: {exc}") from exc
         return {
             "fonte": "json-ld",
             "url": url,
