@@ -4,6 +4,7 @@ import json
 import os
 import re
 import socket
+from pathlib import Path
 from typing import List, Optional
 from urllib.parse import quote_plus, urljoin, urlparse
 
@@ -11,6 +12,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -39,6 +41,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+FRONTEND_INDEX = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
+
 
 class OfertaWeb(BaseModel):
     id_externo: str
@@ -53,6 +57,11 @@ class OfertaWeb(BaseModel):
     link_compra: str
     url_imagem: Optional[str] = None
     disponivel_estoque: int
+
+
+@app.get("/", include_in_schema=False)
+async def frontend():
+    return FileResponse(FRONTEND_INDEX)
 
 
 def _limpar_preco_br(texto: str) -> float:
