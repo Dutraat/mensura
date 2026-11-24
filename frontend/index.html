@@ -1252,6 +1252,41 @@
     padding: 14px 16px;
   }
 
+
+  /* === Graficos Interativos Mensura === */
+  .mchart-wrap{position:relative;user-select:none}
+  .mchart-kpis{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px;align-items:center}
+  .mchart-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .mchart-pill b{color:var(--ink);font-weight:700}
+  .mchart-pill.hi{background:var(--brand-soft);border-color:color-mix(in srgb,var(--brand) 25%,transparent);color:var(--brand)}
+  .mchart-pill.hi b{color:var(--brand)}
+  .mchart-svg{display:block;overflow:visible}
+  .mchart-svg .mbar-g{cursor:pointer;transition:opacity .16s ease}
+  .mchart-svg.has-hover .mbar-g{opacity:.42}
+  .mchart-svg.has-hover .mbar-g.is-hot,
+  .mchart-svg .mbar-g.is-sel{opacity:1}
+  .mchart-svg .mbar-rect{transition:filter .16s ease,transform .16s ease}
+  .mchart-svg .mbar-g.is-hot .mbar-rect,
+  .mchart-svg .mbar-g.is-sel .mbar-rect{filter:brightness(1.12)}
+  .mchart-svg .mbar-val{font-size:10.5px;font-weight:700;fill:var(--muted);transition:fill .16s ease}
+  .mchart-svg .mbar-g.is-hot .mbar-val,
+  .mchart-svg .mbar-g.is-sel .mbar-val{fill:var(--brand);font-weight:800}
+  .mchart-svg .mbar-lbl{font-size:11.5px;fill:var(--muted);font-weight:500}
+  .mchart-svg .mbar-g.is-hot .mbar-lbl,
+  .mchart-svg .mbar-g.is-sel .mbar-lbl{fill:var(--ink);font-weight:700}
+  .mchart-svg .mbar-ring{fill:none;stroke:var(--brand);stroke-width:2;opacity:0;transition:opacity .16s ease}
+  .mchart-svg .mbar-g.is-sel .mbar-ring{opacity:1}
+  .mchart-detail{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:13px}
+  .mchart-detail[hidden]{display:none}
+  .mchart-tip{position:fixed;z-index:9999;pointer-events:none;background:#151a27;color:#fff;padding:9px 12px;border-radius:10px;box-shadow:0 10px 26px rgba(15,23,42,.28);font-size:12.5px;line-height:1.45;min-width:170px;max-width:260px;opacity:0;transform:translateY(4px);transition:opacity .12s ease,transform .12s ease}
+  .mchart-tip.on{opacity:1;transform:translateY(0)}
+  .mchart-tip .mt-head{font-weight:700;font-size:12px;color:#cbd5e1;margin-bottom:2px}
+  .mchart-tip .mt-val{font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-.2px}
+  .mchart-tip .mt-sub{font-size:11.5px;color:#cbd5e1;margin-top:3px}
+  .mchart-tip .mt-delta{display:inline-block;margin-top:4px;padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(255,255,255,.12);color:#e2e8f0}
+  .mchart-tip .mt-delta.up{background:rgba(248,113,113,.22);color:#fecaca}
+  .mchart-tip .mt-delta.dn{background:rgba(74,222,128,.22);color:#bbf7d0}
+
 </style>
 </head>
 <body>
@@ -1717,7 +1752,7 @@ const hguess={date:['data','datacompra','emissao','dataemissao','dtemissao'],sup
 function parseDateAny(x){ x=String(x||'').trim(); let m=x.match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m){ const b=x.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/); if(b) m=[0,b[3].length===2?'20'+b[3]:b[3],b[2].padStart(2,'0'),b[1].padStart(2,'0')]; }
   if(!m) return null; const iso=`${m[1]}-${m[2]}-${m[3]}`, d=new Date(iso+'T00:00:00Z'); return (isNaN(d)||d.toISOString().slice(0,10)!==iso)?null:iso; }
 function himpFind(txt){ const t=String(txt||'').trim(), n=norm(t); if(!n) return null; return DB.items.find(i=>i.sku&&norm(i.sku)===n)||DB.items.find(i=>i.ean&&i.ean===t)||DB.items.find(i=>norm(i.n)===n)||null; }
-function himpValidate(){ const grp=new Map(), out=[];
+function himpValidate(){ const grp=new Map(), out=[]; 
   HIMP.rows.forEach((r,idx)=>{ const g=k=>{ const ci=HIMP.map[k]; return (ci>=0&&ci!=null?(r[ci]||''):'').trim(); }, errs=[], line=idx+2;
     const date=parseDateAny(g('date')); if(!date) errs.push('data inválida (use AAAA-MM-DD ou DD/MM/AAAA)'); const sup=g('sup'); if(!sup) errs.push('fornecedor vazio');
     const it=himpFind(g('item')); if(!it) errs.push(`item “${g('item')}” não cadastrado`);
@@ -2080,10 +2115,20 @@ function purchSpendChart(rows){
   const W=860,H=230,L=70,R=14,T=14,B=34, n=keys.length, bw=(W-L-R)/n;
   const step=niceStep(maxV), y1=Math.ceil(maxV/step)*step+step*0.15, Y=v=>T+(1-(v/y1))*(H-T-B), showLbl=n<=24;
   let g=''; for(let val=0; val<=y1+1e-9; val+=step){ g+=`<line x1="${L}" x2="${W-R}" y1="${Y(val)}" y2="${Y(val)}" stroke="var(--line)"/><text x="${L-8}" y="${Y(val)+4}" text-anchor="end">${money(val)}</text>`; }
-  const bars=keys.map((k,i)=>{ const x=L+i*bw+bw*0.18, w=Math.max(2,bw*0.64), y=Y(by[k].v), h=(T+(H-T-B))-y;
-    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="3" fill="var(--c1)"><title>${k.split('-').reverse().join('/')} • ${money(by[k].v)} • ${by[k].pids.size} compra(s), ${by[k].n} linha(s)</title></rect>`
-      +(showLbl?`<text x="${(x+w/2).toFixed(1)}" y="${H-10}" text-anchor="middle">${k.slice(5)}/${k.slice(2,4)}</text>`:''); }).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Gasto total por mês ao longo do tempo">${g}${bars}</svg>`+(showLbl?'':'<p class="small muted" style="margin:6px 0 0">Muitos meses no filtro: passe o mouse sobre cada barra para ver o mês.</p>');
+  const avgP=vals.reduce((s,v)=>s+v,0)/Math.max(1,vals.length);
+  const bars=keys.map((k,i)=>{ const x=L+i*bw+bw*0.16, w=Math.max(3,bw*0.68), y=Y(by[k].v), h=(T+(H-T-B))-y;
+    const lbl=k.split('-').reverse().join('/');
+    const diffPct=avgP>0?((by[k].v-avgP)/avgP*100):0;
+    const diffTxt=avgP>0?`${diffPct>=0?'+':''}${diffPct.toFixed(1).replace('.',',')}% vs. média`:'';
+    const sub=`${by[k].pids.size} compra(s) • ${by[k].n} item(ns)`;
+    const det=`<b>${lbl}</b> • Total: <b>${money(by[k].v)}</b> • ${sub}${diffTxt?` • <span class="muted">${esc(diffTxt)}</span>`:''}`;
+    return `<g class="mbar-g" tabindex="0" data-mt-head="${esc(lbl)}" data-mt-val="${esc(money(by[k].v))}" data-mt-sub="${esc(sub)}" data-mt-delta="${esc(diffTxt)}" data-mt-dir="${diffPct>3?'up':(diffPct<-3?'dn':'')}" data-mt-detail="${esc(det)}">
+      <rect x="${(L+i*bw).toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${(H-T-B+22).toFixed(1)}" fill="transparent"/>
+      <rect class="mbar-ring" x="${(x-2).toFixed(1)}" y="${(y-2).toFixed(1)}" width="${(w+4).toFixed(1)}" height="${(Math.max(0,h)+4).toFixed(1)}" rx="5"/>
+      <rect class="mbar-rect" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="4" fill="var(--c1)"/>
+      ${showLbl?`<text class="mbar-lbl" x="${(x+w/2).toFixed(1)}" y="${H-10}" text-anchor="middle">${k.slice(5)}/${k.slice(2,4)}</text>`:''}
+    </g>`; }).join('');
+  return `<div class="mchart-wrap"><svg class="mchart-svg" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Gasto total por mês ao longo do tempo">${g}${bars}</svg><div class="mchart-detail" hidden></div></div>`+(showLbl?'':'<p class="small muted" style="margin:6px 0 0">Muitos meses no filtro: passe o mouse ou clique sobre cada barra para ver os detalhes.</p>');
 }
 const histActs={ histMore:()=>{ hf.lim+=100; window._hdraw(); },
   histCsv:()=>{ const rows=histRows(); download('historico_compras_'+today().replace(/-/g,'')+'.csv',toCsv({head:['Data','Fornecedor','Item','Quantidade','Unidade','Preço unitário','Desconto','Imposto (%)','Preço efetivo','Custo real unitário','Total da linha','Origem','Status'],rows:rows.map(r=>[fmtDate(r.p.date),sName(r.p.sid),iName(r.l.iid),fq(r.l.q),r.l.u,f2(r.l.p),f2(r.l.d),f2(r.l.t||0),f2(effUnit(r.l)),f2(landedUnit(r.p,r.l)),f2(lineTotal(r.l)),r.p.imported?'Importado':'Pedido',purPt[r.p.status]])}),'text/csv;charset=utf-8'); toast('CSV exportado.'); },
@@ -2273,8 +2318,34 @@ function annualData(y){
   const std=r2(months.reduce((s,m)=>s+m.std,0)), saving=r2(months.reduce((s,m)=>s+m.saving,0)), refSum=r2(validDecisions().filter(d=>d.kind==='realized'&&d.date.slice(0,4)===y).reduce((s,d)=>s+d.ref,0));
   return {y,P,months,items,total,sups,saving,std,potential:r2(months.reduce((s,m)=>s+m.potential,0)),pctSv:refSum>0?r2(saving/refSum*100):null,taxes:r2(P.reduce((s,p)=>s+taxOf(p),0)),freight:r2(P.reduce((s,p)=>s+(p.freeIncl?0:p.freight),0)),good:cnt('good'),ok:cnt('ok'),bad:cnt('bad'),nodata:cnt('nodata'),over,extra:r2(items.reduce((s,i)=>s+(i.extra>0?i.extra:0),0))}; }
 const mNames=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-function barChart(vals,fmt,cls){ const W=860,H=170,L=10,B=22,T=12, mx=Math.max(...vals,1), mn=Math.min(...vals,0), rng=(mx-mn)||1, y0=T+(mx/rng)*(H-T-B), bw=(W-L*2)/12;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img"><line x1="${L}" x2="${W-L}" y1="${y0}" y2="${y0}" stroke="var(--line)"/>${vals.map((v,i)=>{ const h=Math.abs(v)/rng*(H-T-B), x=L+i*bw+bw*0.18, y=v>=0?y0-h:y0; return `<rect x="${x}" y="${y}" width="${bw*0.64}" height="${Math.max(h,v?1:0)}" rx="3" fill="var(${cls})"><title>${mNames[i]} • ${fmt(v)}</title></rect>${v?`<text x="${x+bw*0.32}" y="${v>=0?y-4:y+h+11}" text-anchor="middle">${fmt(v)}</text>`:''}<text x="${x+bw*0.32}" y="${H-6}" text-anchor="middle">${mNames[i]}</text>`; }).join('')}</svg>`; }
+function barChart(vals,fmt,cls){
+  const W=860,H=185,L=14,B=24,T=20, mx=Math.max(...vals,1), mn=Math.min(...vals,0), rng=(mx-mn)||1, y0=T+(mx/rng)*(H-T-B), bw=(W-L*2)/12;
+  const total=vals.reduce((s,v)=>s+v,0), nz=vals.filter(v=>v!==0), avg=nz.length?total/nz.length:0;
+  const bars=vals.map((v,i)=>{
+    const h=Math.abs(v)/rng*(H-T-B), x=L+i*bw+bw*0.16, w=bw*0.68, y=v>=0?y0-h:y0;
+    const diffPct=avg?((v-avg)/Math.abs(avg)*100):0;
+    const diffTxt=avg?`${diffPct>=0?'+':''}${diffPct.toFixed(1).replace('.',',')}% vs. média`:'';
+    const det=`<b>${mNames[i]}</b> • Valor: <b>${money(v)}</b>${diffTxt?` • <span class="muted">${esc(diffTxt)}</span>`:''}`;
+    return `<g class="mbar-g" tabindex="0" data-mt-head="${esc(mNames[i])}" data-mt-val="${esc(money(v))}" data-mt-sub="Clique na barra para fixar este mês" data-mt-delta="${esc(diffTxt)}" data-mt-dir="${cls==='--c3'?(diffPct>3?'dn':(diffPct<-3?'up':'')):(diffPct>3?'up':(diffPct<-3?'dn':''))}" data-mt-detail="${esc(det)}">
+      <rect x="${(L+i*bw).toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${(H-T).toFixed(1)}" fill="transparent"/>
+      <rect class="mbar-ring" x="${(x-2).toFixed(1)}" y="${(y-2).toFixed(1)}" width="${(w+4).toFixed(1)}" height="${(Math.max(h,v?2:0)+4).toFixed(1)}" rx="5"/>
+      <rect class="mbar-rect" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(h,v?2:0).toFixed(1)}" rx="4" fill="var(${cls})"/>
+      ${v?`<text class="mbar-val" x="${(x+w/2).toFixed(1)}" y="${(v>=0?Math.max(12,y-5):y+h+12).toFixed(1)}" text-anchor="middle">${fmt(v)}</text>`:''}
+      <text class="mbar-lbl" x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle">${mNames[i]}</text>
+    </g>`;
+  }).join('');
+  return `<div class="mchart-wrap">
+    <div class="mchart-kpis">
+      <span class="mchart-pill hi">Total no ano: <b>${money(total)}</b></span>
+      <span class="mchart-pill">Média mensal: <b>${money(avg)}</b></span>
+    </div>
+    <svg class="mchart-svg" viewBox="0 0 ${W} ${H}" width="100%" role="img">
+      <line x1="${L}" x2="${W-L}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--line)"/>
+      ${bars}
+    </svg>
+    <div class="mchart-detail" hidden></div>
+  </div>`;
+}
 const short=v=>Math.abs(v)>=1000?(v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':v.toLocaleString('pt-BR',{maximumFractionDigits:0});
 function annualHtml(y){ const A=annualData(y);
   if(!A.P.length&&!A.saving) return `<div class="card empty">Nenhuma compra registrada em ${y}.</div>`;
@@ -2825,14 +2896,59 @@ let panelPer='90';
 const perOpts=[['30','Últimos 30 dias'],['90','Últimos 90 dias'],['365','Últimos 12 meses'],['ano','Este ano']];
 function perRange(k){ const t=today(); if(k==='ano'){ const a=t.slice(0,4)+'-01-01', n=dDays(a,t)+1; return {from:a,to:t,pFrom:addDays(a,-n),pTo:addDays(a,-1)}; }
   const n=Number(k); return {from:addDays(t,-n+1),to:t,pFrom:addDays(t,-2*n+1),pTo:addDays(t,-n)}; }
-function panelChart(){ const t=today(), months=[]; for(let k=11;k>=0;k--){ const d=new Date(t.slice(0,7)+'-01T00:00:00Z'); d.setUTCMonth(d.getUTCMonth()-k); months.push(d.toISOString().slice(0,7)); }
-  const vals=months.map(m=>DB.purchases.filter(p=>live(p)&&p.date.slice(0,7)===m).reduce((s,p)=>s+costOf(p),0)), mx=Math.max(1,...vals);
-  const W=720,H=220,L=64,R=8,T=12,B=34,bw=(W-L-R)/12, y=v=>T+(H-T-B)*(1-v/mx), ticks=[0,mx/2,mx];
+function panelChart(){
+  const t=today(), months=[];
+  for(let k=11;k>=0;k--){ const d=new Date(t.slice(0,7)+'-01T00:00:00Z'); d.setUTCMonth(d.getUTCMonth()-k); months.push(d.toISOString().slice(0,7)); }
+  const bucket=months.map(m=>{
+    const ps=DB.purchases.filter(p=>live(p)&&p.date.slice(0,7)===m);
+    const val=ps.reduce((s,p)=>s+costOf(p),0);
+    const supMap={};
+    ps.forEach(p=>{ const nm=sName(p.sid); supMap[nm]=(supMap[nm]||0)+costOf(p); });
+    const topSup=Object.entries(supMap).sort((a,b)=>b[1]-a[1])[0];
+    return {m, val, count:ps.length, topSup:topSup?topSup[0]:''};
+  });
+  const vals=bucket.map(b=>b.val), total12=vals.reduce((s,v)=>s+v,0);
+  const nonZero=vals.filter(v=>v>0), avg=nonZero.length?total12/nonZero.length:0;
+  const mxRaw=Math.max(1,...vals), mx=mxRaw*1.12;
+  const maxB=bucket.reduce((a,b)=>b.val>a.val?b:a, bucket[0]);
+  const minPos=bucket.filter(b=>b.val>0).reduce((a,b)=>(!a||b.val<a.val)?b:a, null);
+  const W=740,H=242,L=68,R=16,T=26,B=36,bw=(W-L-R)/12, y=v=>T+(H-T-B)*(1-v/mx), ticks=[0,mxRaw/2,mxRaw];
   const short=v=>v>=1e6?(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi':v>=1e3?(v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:0})+' mil':Math.round(v).toLocaleString('pt-BR');
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Gasto por mês nos últimos 12 meses">
-  ${ticks.map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">R$ ${short(v)}</text>`).join('')}
-  ${vals.map((v,i)=>{ const x=L+i*bw+bw*.18, h=(H-T-B)*(v/mx); const [yy,mm]=months[i].split('-'); return `<rect x="${x}" y="${y(v)}" width="${bw*.64}" height="${Math.max(h,v?1:0)}" rx="3" fill="var(--c1)"><title>${MESL[Number(mm)-1]} de ${yy} • ${money(v)}</title></rect><text x="${x+bw*.32}" y="${H-B+15}" text-anchor="middle">${MES[Number(mm)-1]}</text>`; }).join('')}
-  <text x="${L}" y="${H-3}">Gasto por mês (R$), compras fechadas ou recebidas • fonte: histórico de compras</text></svg>`; }
+  const shortBar=v=>v>=1e6?(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+'M':v>=1e3?(v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+'k':Math.round(v).toLocaleString('pt-BR');
+  const fmtMY=m=>{ const [yy,mm]=m.split('-'); return `${MESL[Number(mm)-1]} de ${yy}`; };
+  const bars=bucket.map((b,i)=>{
+    const x=L+i*bw+bw*.16, w=bw*.68, h=(H-T-B)*(b.val/mx), yyBar=y(b.val);
+    const [yy,mm]=b.m.split('-');
+    const diffPct=avg>0?((b.val-avg)/avg*100):0;
+    const diffTxt=avg>0?`${diffPct>=0?'+':''}${diffPct.toFixed(1).replace('.',',')}% vs. média`:'';
+    const sub=`${b.count} ${b.count===1?'compra':'compras'}${b.topSup?' • Maior: '+b.topSup:''}`;
+    const det=`<b>${esc(fmtMY(b.m))}</b> • Total: <b>${money(b.val)}</b> • ${b.count} ${b.count===1?'compra':'compras'}${b.topSup?` • Principal fornecedor: <b>${esc(b.topSup)}</b>`:''}${diffTxt?` • <span class="muted">${esc(diffTxt)}</span>`:''}`;
+    const isPeak=b.val>0&&b.m===maxB.m;
+    return `<g class="mbar-g" tabindex="0" data-mt-head="${esc(fmtMY(b.m))}" data-mt-val="${esc(money(b.val))}" data-mt-sub="${esc(sub)}" data-mt-delta="${esc(diffTxt)}" data-mt-dir="${diffPct>3?'up':(diffPct<-3?'dn':'')}" data-mt-detail="${esc(det)}">
+      <rect x="${(L+i*bw).toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${(H-T-B+22).toFixed(1)}" fill="transparent"/>
+      <rect class="mbar-ring" x="${(x-2).toFixed(1)}" y="${(yyBar-2).toFixed(1)}" width="${(w+4).toFixed(1)}" height="${(Math.max(h,b.val?2:0)+4).toFixed(1)}" rx="6"/>
+      <rect class="mbar-rect" x="${x.toFixed(1)}" y="${yyBar.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(h,b.val?2:0).toFixed(1)}" rx="4" fill="${isPeak?'var(--brand)':'var(--c1)'}"/>
+      ${b.val>0?`<text class="mbar-val" x="${(x+w/2).toFixed(1)}" y="${Math.max(12,yyBar-6).toFixed(1)}" text-anchor="middle">${shortBar(b.val)}</text>`:''}
+      <text class="mbar-lbl" x="${(x+w/2).toFixed(1)}" y="${H-B+16}" text-anchor="middle">${MES[Number(mm)-1]}</text>
+    </g>`;
+  }).join('');
+  const avgLine=avg>0?`<line x1="${L}" x2="${W-R}" y1="${y(avg).toFixed(1)}" y2="${y(avg).toFixed(1)}" stroke="#475569" stroke-width="1.3" stroke-dasharray="5 4" opacity=".65"/>`:'';
+  return `<div class="mchart-wrap">
+    <div class="mchart-kpis">
+      <span class="mchart-pill hi">Total 12 meses: <b>${money(total12)}</b></span>
+      <span class="mchart-pill"><span style="display:inline-block;width:12px;border-top:2px dashed #475569"></span>Média mensal: <b>${money(avg)}</b></span>
+      ${maxB&&maxB.val>0?`<span class="mchart-pill">Pico: <b>${MES[Number(maxB.m.split('-')[1])-1]} (${money(maxB.val)})</b></span>`:''}
+      ${minPos&&minPos.m!==maxB.m?`<span class="mchart-pill">Menor: <b>${MES[Number(minPos.m.split('-')[1])-1]} (${money(minPos.val)})</b></span>`:''}
+    </div>
+    <svg class="mchart-svg" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Gasto por mês nos últimos 12 meses">
+      ${ticks.map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--line)"/><text x="${L-8}" y="${(y(v)+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--muted)">R$ ${short(v)}</text>`).join('')}
+      ${avgLine}
+      ${bars}
+      <text x="${L}" y="${H-3}" style="font-size:11px;fill:var(--muted)">Passe o mouse ou clique em um mês para ver detalhes • fonte: histórico de compras</text>
+    </svg>
+    <div class="mchart-detail" hidden></div>
+  </div>`;
+}
 screenHelp.panel='Indicadores para consultar com calma: gasto, economia e qualidade das compras no período escolhido, comparados com o período anterior.';
 screens.panel=()=>({title:'Painel de análise',html:()=>{
   const r=perRange(panelPer), inR=(d,a,b)=>d>=a&&d<=b;
@@ -2903,7 +3019,7 @@ function render(){
   const cur=nav.querySelector(`[data-go="${hk}"]`); if(cur) cur.setAttribute('aria-current','page');
   mnav.value=hk;
   s.init&&s.init(); document.querySelector('main').scrollTop=0; window.scrollTo(0,0);
-
+  
 }
 window.addEventListener('hashchange',()=>{
   if(revertHash){ revertHash=false; return; }
@@ -3158,14 +3274,52 @@ function dashNew(D){
 let WSEARCH = {
   iid: '',
   q: '',
-  qty: 100,
+  qty: '',
   days: 3,
+  sortBy: 'price_asc',
   apiUrl: '',
   loading: false,
   sourceMsg: '',
   results: [],
   basket: []
 };
+
+function unwrapStoreUrl(rawUrl, titulo, loja){
+  let u = String(rawUrl || '').trim();
+  const isGoogle = (s) => {
+    try {
+      const h = new URL(s).hostname.toLowerCase();
+      return h === 'google.com' || h.endsWith('.google.com') || h.endsWith('.google.com.br');
+    } catch(e){ return false; }
+  };
+  for(let i = 0; i < 3 && u && isGoogle(u); i++){
+    try {
+      const sp = new URL(u).searchParams;
+      const next = sp.get('url') || sp.get('adurl') || sp.get('q') || sp.get('u') || '';
+      if(next && /^https?:\/\//i.test(next) && next !== u){ u = next; continue; }
+    } catch(e){}
+    break;
+  }
+  if(u && !isGoogle(u)) return u;
+  const term = String(titulo || WSEARCH.q || '').trim();
+  const l = String(loja || '').toLowerCase();
+  const qEnc = encodeURIComponent(term);
+  const qSlug = encodeURIComponent(term.replace(/\s+/g, '-'));
+  if(l.includes('mercado livre') || l.includes('mercadolivre')) return 'https://lista.mercadolivre.com.br/' + qSlug;
+  if(l.includes('amazon')) return 'https://www.amazon.com.br/s?k=' + qEnc;
+  if(l.includes('magalu') || l.includes('magazine')) return 'https://www.magazineluiza.com.br/busca/' + qEnc + '/';
+  if(l.includes('shopee')) return 'https://shopee.com.br/search?keyword=' + qEnc;
+  if(l.includes('americanas')) return 'https://www.americanas.com.br/busca/' + qEnc;
+  if(l.includes('casas bahia')) return 'https://www.casasbahia.com.br/' + qEnc + '/b';
+  if(l.includes('carrefour')) return 'https://www.carrefour.com.br/busca/' + qEnc;
+  if(l.includes('kalunga')) return 'https://www.kalunga.com.br/busca/1?q=' + qEnc;
+  if(l.includes('leroy')) return 'https://www.leroymerlin.com.br/search?term=' + qEnc;
+  if(l.includes('atacad')) return 'https://www.atacadao.com.br/s?q=' + qEnc;
+  if(l.includes('assa')) return 'https://www.assai.com.br/busca?q=' + qEnc;
+  const mDom = l.match(/([a-z0-9-]+\.(?:com\.br|com|net\.br))/);
+  if(mDom) return 'https://' + mDom[1];
+  return term ? ('https://lista.mercadolivre.com.br/' + qSlug) : u;
+}
 try { WSEARCH.apiUrl = localStorage.getItem('mensura_api_url') || ''; } catch(e) {}
 
 function ensureWebInit(){ /* Mantém a barra de busca limpa até o usuário digitar ou clicar em uma sugestão */ }
@@ -3176,7 +3330,6 @@ function selectWebItem(iid, autoRun){
   WSEARCH.iid = it.id;
   WSEARCH.q = it.n;
   const si = stockInfo(it.id);
-  WSEARCH.qty = (si && si.sug && si.sug > 0) ? si.sug : 50;
   WSEARCH.days = (si && si.lead >= 0) ? si.lead : 3;
   if(autoRun) runWebSearch();
 }
@@ -3187,12 +3340,14 @@ function buildMarketOffersFor(term, it){
   const basePrice = baseHist.length ? wavg(baseHist.slice(-8)) : 12.50;
   const u = it ? (it.u || 'un') : 'un';
   const pk = it && it.pk ? ` (${it.pk})` : '';
+  const qSlug = encodeURIComponent(term.replace(/\s+/g, '-'));
+  const qEnc = encodeURIComponent(term);
   const stores = [
-    {loja: 'Mercado Livre • Atacado Full', mult: 0.93, days: 2, pay: 'À vista / Pix', link: 'https://lista.mercadolivre.com.br/' + encodeURIComponent(term)},
-    {loja: 'Distribuidora B2B Brasil', mult: 0.96, days: 3, pay: '28 dias (Boleto)', link: 'https://www.google.com/search?tbm=shop&q=' + encodeURIComponent(term)},
-    {loja: 'Central de Insumos & Matéria-Prima', mult: 1.01, days: 4, pay: '30 dias', link: 'https://www.google.com/search?tbm=shop&q=' + encodeURIComponent(term)},
-    {loja: 'Magazine & Suprimentos Express', mult: 1.05, days: 1, pay: 'Cartão / Pix', link: 'https://lista.mercadolivre.com.br/' + encodeURIComponent(term)},
-    {loja: 'Portal Atacadista Industrial', mult: 1.09, days: 5, pay: '21 dias', link: 'https://www.google.com/search?tbm=shop&q=' + encodeURIComponent(term)}
+    {loja: 'Mercado Livre • Atacado Full', mult: 0.93, days: 2, pay: 'À vista / Pix', link: 'https://lista.mercadolivre.com.br/' + qSlug},
+    {loja: 'Amazon Brasil • Suprimentos', mult: 0.96, days: 3, pay: 'À vista / Cartão', link: 'https://www.amazon.com.br/s?k=' + qEnc},
+    {loja: 'Atacadão Online', mult: 1.01, days: 4, pay: 'Pix / Boleto', link: 'https://www.atacadao.com.br/s?q=' + qEnc},
+    {loja: 'Magazine Luiza', mult: 1.05, days: 1, pay: 'Cartão / Pix', link: 'https://www.magazineluiza.com.br/busca/' + qEnc + '/'},
+    {loja: 'Shopee Brasil', mult: 1.09, days: 5, pay: 'Pix / Parcelado', link: 'https://shopee.com.br/search?keyword=' + qEnc}
   ];
   const lastBuy = it ? observations(it.id).filter(o => o.src === 'Compra').slice(-1)[0] : null;
   const lastSupName = lastBuy ? sName(lastBuy.sid) : null;
@@ -3214,7 +3369,7 @@ async function runWebSearch(){
   const qIn = $('#wsQ'), qtyIn = $('#wsQty'), dIn = $('#wsDays'), iIn = $('#wsItem'), apiIn = $('#wsApi');
   if(iIn && iIn.value) WSEARCH.iid = iIn.value;
   if(qIn) WSEARCH.q = qIn.value.trim();
-  if(qtyIn) { const v = parseBR(qtyIn.value); if(!isNaN(v) && v > 0) WSEARCH.qty = v; }
+  if(qtyIn) { const rawQ = qtyIn.value.trim(); if(!rawQ){ WSEARCH.qty = ''; } else { const v = parseBR(rawQ); WSEARCH.qty = (!isNaN(v) && v > 0) ? v : ''; } }
   if(dIn) { const d = Number(dIn.value); if(!isNaN(d) && d >= 0) WSEARCH.days = d; }
   if(apiIn) { WSEARCH.apiUrl = apiIn.value.trim(); try{localStorage.setItem('mensura_api_url',WSEARCH.apiUrl);}catch(e){} }
 
@@ -3235,7 +3390,7 @@ async function runWebSearch(){
     : (useSameOrigin ? '/' : '');
   if(apiBase){
     try {
-      const res = await fetch(apiBase + 'api/ml/buscar?q=' + encodeURIComponent(term) + '&limite=10&permitir_contingencia=true');
+      const res = await fetch(apiBase + 'api/ml/buscar?q=' + encodeURIComponent(term) + '&limite=10&permitir_contingencia=false');
       if(res.ok){
         const payload = await res.json();
         const rows = Array.isArray(payload) ? payload : (Array.isArray(payload && payload.ofertas) ? payload.ofertas : (Array.isArray(payload && payload.resultados) ? payload.resultados : []));
@@ -3251,7 +3406,7 @@ async function runWebSearch(){
               loja: lojaNome + vend,
               days: Number(p.prazo_estimado_dias) > 0 ? Number(p.prazo_estimado_dias) : (WSEARCH.days || 3),
               pay: p.logistica_full ? ('Full • ' + freteTxt) : freteTxt,
-              link_compra: p.link_compra || '',
+              link_compra: unwrapStoreUrl(p.link_compra || '', p.titulo || term, lojaNome + vend),
               url_imagem: p.url_imagem || null
             };
           }).filter(x => x.preco > 0);
@@ -3284,18 +3439,13 @@ async function runWebSearch(){
     } catch(e) {}
   }
 
-  /* 3. Combina ou faz fallback com ofertas B2B calibradas pelo item para garantir que sempre haja opções prontas para compra */
-  const b2b = buildMarketOffersFor(term, it);
-  if(!list.length){
-    list = b2b;
-    sourceLabel = 'Varredura de fornecedores online e atacado B2B';
-  } else {
-    list = [...list, ...b2b.slice(0, 2)].sort((a,b) => a.preco - b.preco);
-  }
-
-  WSEARCH.results = list.sort((a,b) => a.preco - b.preco);
+  /* 3. Exibe exclusivamente ofertas reais (sem injetar ofertas simuladas de preço fixo) */
+  WSEARCH.searched = true;
+  WSEARCH.results = list.sort((a,b) => (Number(a.preco) || 0) - (Number(b.preco) || 0));
   WSEARCH.loading = false;
-  WSEARCH.sourceMsg = `${WSEARCH.results.length} ofertas encontradas (${sourceLabel}) — ordenadas do menor para o maior preço`;
+  WSEARCH.sourceMsg = WSEARCH.results.length
+    ? `${WSEARCH.results.length} ofertas reais encontradas (${sourceLabel}) — ordenadas por preço`
+    : `Nenhuma oferta real encontrada para "${term}" no momento.`;
   if($('#wsResults')) drawWebSearchBody();
 }
 
@@ -3375,15 +3525,24 @@ function drawWebSearchBody(){
     return;
   }
   if(!WSEARCH.results.length){
-    box.innerHTML = `<div class="card empty">Digite o nome de um item na barra acima ou clique em uma sugestão de reposição para buscar ofertas e ver a melhor época de compra.</div>`;
+    box.innerHTML = WSEARCH.searched
+      ? `<div class="card empty">Nenhuma oferta real encontrada para <b>${esc(WSEARCH.q)}</b> no momento. Tente outro termo ou aguarde alguns segundos caso o servidor esteja iniciando.</div>`
+      : `<div class="card empty">Digite o nome de um item na barra acima ou clique em uma sugestão de reposição para buscar ofertas e ver a melhor época de compra.</div>`;
     return;
   }
 
-  const maxUnit = Math.max(...WSEARCH.results.map(x => x.preco));
-  const minUnit = WSEARCH.results[0].preco;
-  const maxSaving = r2((maxUnit - minUnit) * qty);
+  const prices = WSEARCH.results.map(x => Number(x.preco) || 0).filter(v => v > 0);
+  const maxUnit = prices.length ? Math.max(...prices) : 0;
+  const minUnit = prices.length ? Math.min(...prices) : 0;
+  const hasQty = Number(WSEARCH.qty) > 0;
+  const maxSaving = r2((maxUnit - minUnit) * (hasQty ? qty : 1));
 
-  const visibleRes = WSEARCH.maxDays > 0 ? WSEARCH.results.filter(o => (o.days ?? 3) <= WSEARCH.maxDays) : WSEARCH.results;
+  const filteredRes = WSEARCH.maxDays > 0 ? WSEARCH.results.filter(o => (o.days ?? 3) <= WSEARCH.maxDays) : WSEARCH.results.slice();
+  const visibleRes = filteredRes.sort((a, b) => {
+    if(WSEARCH.sortBy === 'price_desc') return (Number(b.preco) || 0) - (Number(a.preco) || 0);
+    if(WSEARCH.sortBy === 'days_asc') return ((a.days ?? 99) - (b.days ?? 99)) || ((Number(a.preco) || 0) - (Number(b.preco) || 0));
+    return (Number(a.preco) || 0) - (Number(b.preco) || 0);
+  });
   if(!visibleRes.length){
     box.innerHTML = `<div class="card empty">Nenhuma oferta encontrada com entrega em até ${WSEARCH.maxDays} dias. Altere o filtro de prazo para ver todas as ${WSEARCH.results.length} ofertas.</div>`;
     return;
@@ -3393,7 +3552,7 @@ function drawWebSearchBody(){
 
   const cardsHtml = visibleRes.map((o) => {
     const idx = WSEARCH.results.indexOf(o);
-    const isBest = idx === 0;
+    const isBest = Number(o.preco) === minUnit && minUnit > 0;
     const inBasket = WSEARCH.basket.some(b => b.offer.id === o.id && b.iid === (it ? it.id : ''));
     const dDays = o.days ?? WSEARCH.days ?? 3;
     const isFast = dDays <= 2;
@@ -3491,7 +3650,7 @@ function drawWebSearchBody(){
   <div class="row" style="margin-bottom:10px">
     <span class="small muted"><b>${esc(WSEARCH.sourceMsg)}</b></span>
     <span class="sp"></span>
-    ${maxSaving > 0 ? `<span class="chip ok">Economia potencial no lote: <b>${money(maxSaving)}</b></span>` : ''}
+    ${maxSaving > 0 ? `<span class="chip ok">${hasQty ? 'Economia potencial no lote' : 'Diferença entre ofertas'}: <b>${money(maxSaving)}${hasQty ? '' : '/un'}</b></span>` : ''}
   </div>
   <div class="web-offers-grid">${cardsHtml}</div>
   ${basketBar}`;
@@ -3516,14 +3675,22 @@ screens.search = () => ({
 
       <div class="ws-filters-row">
         <label class="ws-filter-chip">
-          <span>Quantidade:</span>
-          <input id="wsQty" value="${esc(String(WSEARCH.qty))}" inputmode="decimal" style="width:82px">
+          <span>Quantidade (opcional):</span>
+          <input id="wsQty" type="number" min="1" step="any" value="${WSEARCH.qty ? esc(String(WSEARCH.qty)) : ''}" placeholder="Opcional" inputmode="decimal" style="width:86px">
           <span class="muted">un</span>
         </label>
         <label class="ws-filter-chip">
           <span>Prazo máximo (opcional):</span>
           <input id="wsMaxDays" type="number" min="0" step="1" value="${WSEARCH.maxDays||''}" placeholder="Ex.: 3" style="width:74px">
           <span class="muted">dias</span>
+        </label>
+        <label class="ws-filter-chip">
+          <span>Ordenar:</span>
+          <select id="wsSort" style="border:0;background:transparent;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;outline:none;padding:0 2px">
+            <option value="price_asc" ${WSEARCH.sortBy==='price_asc'?'selected':''}>Menor preço</option>
+            <option value="price_desc" ${WSEARCH.sortBy==='price_desc'?'selected':''}>Maior preço</option>
+            <option value="days_asc" ${WSEARCH.sortBy==='days_asc'?'selected':''}>Menor prazo</option>
+          </select>
         </label>
         <span class="sp"></span>
         <details style="font-size:12px;color:var(--muted)">
@@ -3569,12 +3736,19 @@ screens.search = () => ({
       if(acBox && !e.target.closest('.ws-ac-wrap')) acBox.hidden = true;
     });
     if(qtyIn) qtyIn.addEventListener('input', () => {
-      const v = parseBR(qtyIn.value);
+      const raw = qtyIn.value.trim();
+      if(!raw){ WSEARCH.qty = ''; drawWebSearchBody(); return; }
+      const v = parseBR(raw);
       if(!isNaN(v) && v > 0){ WSEARCH.qty = v; drawWebSearchBody(); }
     });
     if(maxD) maxD.addEventListener('input', () => {
       const n = parseInt(maxD.value, 10);
       WSEARCH.maxDays = (!isNaN(n) && n > 0) ? n : 0;
+      drawWebSearchBody();
+    });
+    const sortEl = $('#wsSort');
+    if(sortEl) sortEl.addEventListener('change', () => {
+      WSEARCH.sortBy = sortEl.value || 'price_asc';
       drawWebSearchBody();
     });
     drawWebSearchBody();
@@ -3673,6 +3847,98 @@ Object.assign(gsActs, {
 
 document.documentElement.setAttribute('data-aux', 'slate');
 render();
+
+/* === Interatividade global dos graficos Mensura (hover tooltip + clique para detalhar) === */
+(function initMensuraInteractiveCharts(){
+  let tipEl = null;
+  const ensureTip = () => {
+    if(!tipEl){
+      tipEl = document.createElement('div');
+      tipEl.className = 'mchart-tip';
+      document.body.appendChild(tipEl);
+    }
+    return tipEl;
+  };
+  const posTip = (ev) => {
+    const tip = ensureTip();
+    const pad = 14;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const rect = tip.getBoundingClientRect();
+    let left = (ev.clientX || 0) + pad;
+    let top = (ev.clientY || 0) - rect.height - pad;
+    if(left + rect.width + 8 > vw) left = Math.max(8, (ev.clientX || 0) - rect.width - pad);
+    if(top < 8) top = (ev.clientY || 0) + pad;
+    if(top + rect.height + 8 > vh) top = Math.max(8, vh - rect.height - 8);
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  };
+  const showTip = (g, ev) => {
+    const tip = ensureTip();
+    const head = g.getAttribute('data-mt-head') || '';
+    const val = g.getAttribute('data-mt-val') || '';
+    const sub = g.getAttribute('data-mt-sub') || '';
+    const delta = g.getAttribute('data-mt-delta') || '';
+    const dir = g.getAttribute('data-mt-dir') || '';
+    tip.innerHTML = `<div class="mt-head">${esc(head)}</div><div class="mt-val">${esc(val)}</div>${sub?`<div class="mt-sub">${esc(sub)}</div>`:''}${delta?`<div class="mt-delta ${esc(dir)}">${esc(delta)}</div>`:''}`;
+    tip.classList.add('on');
+    posTip(ev);
+  };
+  const hideTip = () => { if(tipEl) tipEl.classList.remove('on'); };
+
+  let hotBar = null;
+  document.addEventListener('pointerover', (ev) => {
+    const g = ev.target && ev.target.closest ? ev.target.closest('.mbar-g') : null;
+    if(!g) return;
+    const svg = g.closest('.mchart-svg');
+    if(hotBar && hotBar !== g) hotBar.classList.remove('is-hot');
+    hotBar = g;
+    g.classList.add('is-hot');
+    if(svg) svg.classList.add('has-hover');
+    showTip(g, ev);
+  });
+  document.addEventListener('pointermove', (ev) => {
+    if(hotBar && tipEl && tipEl.classList.contains('on')) posTip(ev);
+  });
+  document.addEventListener('pointerout', (ev) => {
+    const g = ev.target && ev.target.closest ? ev.target.closest('.mbar-g') : null;
+    if(!g) return;
+    const rel = ev.relatedTarget && ev.relatedTarget.closest ? ev.relatedTarget.closest('.mbar-g') : null;
+    if(rel === g) return;
+    g.classList.remove('is-hot');
+    const svg = g.closest('.mchart-svg');
+    if(svg && !svg.querySelector('.mbar-g.is-hot')) svg.classList.remove('has-hover');
+    if(hotBar === g){ hotBar = null; hideTip(); }
+  });
+  document.addEventListener('click', (ev) => {
+    const closeBtn = ev.target && ev.target.closest ? ev.target.closest('[data-mchart-close]') : null;
+    if(closeBtn){
+      const wrap = closeBtn.closest('.mchart-wrap');
+      if(wrap){
+        wrap.querySelectorAll('.mbar-g.is-sel').forEach(el => el.classList.remove('is-sel'));
+        const det = wrap.querySelector('.mchart-detail');
+        if(det) det.hidden = true;
+      }
+      return;
+    }
+    const g = ev.target && ev.target.closest ? ev.target.closest('.mbar-g') : null;
+    if(!g) return;
+    const wrap = g.closest('.mchart-wrap');
+    if(!wrap) return;
+    const det = wrap.querySelector('.mchart-detail');
+    const wasSel = g.classList.contains('is-sel');
+    wrap.querySelectorAll('.mbar-g.is-sel').forEach(el => el.classList.remove('is-sel'));
+    if(wasSel){
+      if(det) det.hidden = true;
+      return;
+    }
+    g.classList.add('is-sel');
+    if(det){
+      det.innerHTML = `<div style="flex:1;min-width:200px">${g.getAttribute('data-mt-detail') || ''}</div><button type="button" class="btn sm" data-mchart-close="1">Fechar</button>`;
+      det.hidden = false;
+    }
+  });
+})();
+
 </script>
 </body>
 </html>
