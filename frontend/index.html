@@ -3289,7 +3289,7 @@ let WSEARCH = {
   results: [],
   basket: []
 };
-try { WSEARCH.regiao = localStorage.getItem('mensura_regiao') || ''; } catch(e) {}
+try { const _rg = localStorage.getItem('mensura_regiao') || ''; WSEARCH.regiao = ['Nordeste','Sudeste','Sul','Centro-Oeste','Norte'].includes(_rg) ? _rg : ''; } catch(e) {}
 
 function siteHostOf(url, fallback){
   try {
@@ -3603,7 +3603,7 @@ function drawWebSearchBody(){
           <div class="web-ocard-title">${esc(o.titulo)}</div>
           ${showSeller ? `<div class="web-seller-sub">Fornecedor/Loja: <b>${esc(o.loja)}</b></div>` : ''}
           <div class="web-delivery-pill ${isFast ? 'fast' : ''}">
-            ${sym('truck')} <span>Chega em ${dDays} ${dDays===1?'dia':'dias'}</span>
+            ${sym('truck')} <span>${WSEARCH.regiao ? `Entrega (${esc(WSEARCH.regiao)}) • ~${dDays} ${dDays===1?'dia':'dias'}` : `Chega em ${dDays} ${dDays===1?'dia':'dias'}`}</span>
           </div>
           <div class="small muted" style="margin-top:4px">${esc(o.pay || 'À vista')}</div>
         </div>
@@ -3709,20 +3709,15 @@ screens.search = () => ({
           <span class="muted">dias</span>
         </label>
         <label class="ws-filter-chip">
-          <span>Região:</span>
-          <input id="wsRegiao" list="wsRegioesList" value="${esc(WSEARCH.regiao)}" placeholder="Brasil todo" style="width:128px">
-          <datalist id="wsRegioesList">
-            <option value="Recife, PE">
-            <option value="São Paulo, SP">
-            <option value="Rio de Janeiro, RJ">
-            <option value="Belo Horizonte, MG">
-            <option value="Salvador, BA">
-            <option value="Fortaleza, CE">
-            <option value="Curitiba, PR">
-            <option value="Porto Alegre, RS">
-            <option value="Brasília, DF">
-            <option value="Campinas, SP">
-          </datalist>
+          <span>Região de entrega:</span>
+          <select id="wsRegiao" style="border:0;background:transparent;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;outline:none;padding:0 2px">
+            <option value="" ${!WSEARCH.regiao?'selected':''}>Brasil todo</option>
+            <option value="Nordeste" ${WSEARCH.regiao==='Nordeste'?'selected':''}>Nordeste</option>
+            <option value="Sudeste" ${WSEARCH.regiao==='Sudeste'?'selected':''}>Sudeste</option>
+            <option value="Sul" ${WSEARCH.regiao==='Sul'?'selected':''}>Sul</option>
+            <option value="Centro-Oeste" ${WSEARCH.regiao==='Centro-Oeste'?'selected':''}>Centro-Oeste</option>
+            <option value="Norte" ${WSEARCH.regiao==='Norte'?'selected':''}>Norte</option>
+          </select>
         </label>
         <label class="ws-filter-chip">
           <span>Ordenar:</span>

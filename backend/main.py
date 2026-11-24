@@ -105,10 +105,21 @@ def _limpar_preco_br(valor) -> float:
 
 
 def _normalizar_location_serper(regiao: str) -> str:
-    """Converte entrada amigavel (ex: 'Recife, PE') em formato location aceito pela Serper."""
+    """Converte macrorregiao do Brasil (Nordeste, Sudeste, Sul, Centro-Oeste, Norte) ou Cidade/UF para location da Serper."""
     r = (regiao or "").strip()
-    if not r or r.lower() in ("brasil", "brasil todo", "br", "todas", "todos"):
+    rl = r.lower()
+    if not r or rl in ("brasil", "brasil todo", "br", "todas", "todos"):
         return ""
+    macrorregioes = {
+        "nordeste": "Recife, State of Pernambuco, Brazil",
+        "sudeste": "Sao Paulo, State of Sao Paulo, Brazil",
+        "sul": "Curitiba, State of Parana, Brazil",
+        "centro-oeste": "Brasilia, Federal District, Brazil",
+        "centro oeste": "Brasilia, Federal District, Brazil",
+        "norte": "Manaus, State of Amazonas, Brazil",
+    }
+    if rl in macrorregioes:
+        return macrorregioes[rl]
     mapa_uf = {
         "AC": "Acre", "AL": "Alagoas", "AP": "Amapa", "AM": "Amazonas",
         "BA": "Bahia", "CE": "Ceara", "DF": "Federal District", "ES": "Espirito Santo",
@@ -124,7 +135,7 @@ def _normalizar_location_serper(regiao: str) -> str:
         uf = m.group(2).upper()
         estado = mapa_uf.get(uf, uf)
         return f"{cidade}, State of {estado}, Brazil"
-    if "brazil" not in r.lower() and "brasil" not in r.lower():
+    if "brazil" not in rl and "brasil" not in rl:
         return f"{r}, Brazil"
     return r
 
@@ -157,8 +168,12 @@ async def buscar_google_shopping_serper(
             continue
 
         fonte = item.get("source") or "Loja Online"
-        entrega = str(item.get("delivery") or "").lower()
+        entrega_raw = str(item.get("delivery") or "").strip()
+        entrega = entrega_raw.lower()
         frete_gratis = "grátis" in entrega or "gratis" in entrega
+        m_dias = re.search(r"(\d+)\s*(?:dia|dias)", entrega)
+        prazo_calc = int(m_dias.group(1)) if m_dias else (3 if frete_gratis else 5)
+        cond_txt = entrega_raw if entrega_raw else "Ver frete e entrega na loja"
         link_item = item.get("link", "")
         host = ""
         try:
@@ -172,11 +187,11 @@ async def buscar_google_shopping_serper(
                 preco=preco,
                 frete_gratis=frete_gratis,
                 logistica_full="full" in entrega,
-                prazo_estimado_dias=3 if frete_gratis else 5,
+                prazo_estimado_dias=prazo_calc,
                 vendedor=fonte,
                 loja_origem=fonte,
                 site_dominio=host or fonte,
-                condicao_pagamento="À vista (ver na loja)",
+                condicao_pagamento=cond_txt,
                 link_compra=link_item,
                 url_imagem=item.get("imageUrl"),
                 disponivel_estoque=10,
