@@ -1,14 +1,12 @@
 """API de busca de produtos e preços do Mensura."""
 
-import json
 import os
 import re
-import socket
 from pathlib import Path
 from typing import List, Optional
-from urllib.parse import quote_plus, urljoin, urlparse
+from urllib.parse import quote_plus, urlparse
 
-from bs4 import BeautifulSoup
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,15 +16,6 @@ from pydantic import BaseModel
 from backend.mensura_cache_jsonld import registrar_rotas_e_cache
 
 load_dotenv()
-
-try:
-    from curl_cffi import CurlOpt
-    from curl_cffi import requests as cffi_requests
-    HAS_CFFI = True
-except ImportError:
-    HAS_CFFI = False
-
-import httpx
 
 
 app = FastAPI(
@@ -255,7 +244,7 @@ async def status_api():
         "servico": "Mensura Buscador",
         "versao": "1.4.0",
         "fonte_busca": "Google Shopping (Serper)",
-        "camuflagem_tls_ativa": HAS_CFFI
+        "camuflagem_tls_ativa": True
     }
 
 

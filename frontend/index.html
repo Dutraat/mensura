@@ -364,7 +364,7 @@
   :root[data-look="c"] .atile.bad .an{color:#ffb4ab} :root[data-look="c"] .atile.bad .aico{background:rgba(255,120,110,.22);color:#ffb4ab} :root[data-look="c"] .atile.warn .aico{background:rgba(255,200,90,.2);color:#ffd27a} :root[data-look="c"] .attn2 .ah .btn{background:#fff;color:#101828}
   .kq .l{color:var(--muted);font-size:13.5px} .kq .v{font-size:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:4px 0 2px;white-space:nowrap} .kq .n{font-size:13px;color:var(--muted)} .kq[role=button]{cursor:pointer} .kq[role=button]:hover{box-shadow:0 0 0 2px var(--brand-soft),var(--shadow)}
   .tbad{color:color-mix(in srgb,var(--bad) 88%,#000);font-weight:650}
-  .li2{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--line)} .dh2+.li2{border-top:0;padding-top:2px} .li2 .t{flex:1;min-width:0} .li2 .t b{display:block;font-weight:650;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .li2 .t small{color:var(--muted);font-size:13px}
+  .li2{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--line)} .dh2+.li2{border-top:0;padding-top:2px} .li2 .t{flex:1;min-width:0} .li2 .t > b{display:block;font-weight:650;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .li2 .t small{color:var(--muted);font-size:13px}
   .li2.go{cursor:pointer;border-radius:12px} .li2.go:hover{background:var(--bg)} .li2.go:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
   .rcard{display:flex;gap:18px;align-items:flex-start} .rcard .rb{flex:1;min-width:0;display:grid;gap:10px} .rcard .rn{font-size:17px} .rcard .rw{font-size:15px}
   .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px} .facts>div{background:var(--bg);border-radius:12px;padding:9px 12px} .facts small{display:block;color:var(--muted);font-size:12px;margin-bottom:2px} .facts b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
@@ -445,9 +445,9 @@
     display: inline-block; margin-right: 8px; vertical-align: -2px;
   }
   .dh2::before { margin-right: 0; }
+  .attn2 h2::before, .hero h2::before { display: none; } /* título grande do bloco azul não precisa do marcador */
   .card.rcard { border-left: 4px solid var(--brand); }
   .scroll table thead th { border-bottom: 2px solid color-mix(in srgb, var(--brand) 30%, var(--line)); }
-  .fsteps button[aria-current="step"] .stepn { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
 
   .tbox {
     background: var(--brand) !important; color: #ffffff !important;
@@ -459,7 +459,7 @@
 
   .rem-pill {
     display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;
-    font-size: 12.5px; font-weight: 600; width: fit-content; line-height: 1.2;
+    font-size: 12.5px; font-weight: 600; width: fit-content; max-width: 100%; line-height: 1.2; white-space: nowrap;
     font-variant-numeric: tabular-nums; background: #ffffff; color: var(--ink);
     border: 1.5px solid var(--gold); border-radius: 999px; padding: 3px 11px;
   }
@@ -1094,6 +1094,11 @@
     margin-bottom: 8px;
   }
   .st-way-item:last-child { margin-bottom: 0; }
+  .st-way-act { display: grid; justify-items: end; gap: 6px; margin-left: auto; }
+  .st-way-btns { display: flex; gap: 8px; align-items: center; }
+  .st-way-btns .btn { display: inline-flex; align-items: center; min-height: 34px; }
+  @media (max-width: 640px) { .st-way-act { grid-template-columns: 1fr auto; align-items: center; width: 100%; justify-items: stretch; } .st-way-act > div:first-child { justify-self: start; } }
+  table.edtab { min-width: 1120px; } table.edtab input, table.edtab select { width: 100%; box-sizing: border-box; }
 
   /* Estoque: Mini-Dashboard Visual de Saúde e Cobertura */
   .st-viz-grid {
@@ -1292,6 +1297,33 @@
   .web-site-badge .ws-dot{width:7px;height:7px;border-radius:50%;background:var(--brand);flex:0 0 auto}
   .web-seller-sub{font-size:12px;color:var(--muted);margin-top:3px}
 
+  /* ===== Skeleton de carregamento ===== */
+  .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .sk{--sk-base:color-mix(in srgb,var(--line) 62%,var(--panel));--sk-hi:color-mix(in srgb,var(--line) 20%,var(--panel));
+    display:block;position:relative;overflow:hidden;background:var(--sk-base);border-radius:8px;min-height:12px}
+  .sk::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+    background:linear-gradient(90deg,transparent,var(--sk-hi),transparent);animation:skShimmer 1.4s ease-in-out infinite}
+  @keyframes skShimmer{to{transform:translateX(100%)}}
+  .sk-line{height:12px;margin:9px 0}
+  .sk-line.lg{height:26px;border-radius:10px} .sk-line.md{height:16px}
+  .sk-w30{width:30%} .sk-w45{width:45%} .sk-w60{width:60%} .sk-w80{width:80%} .sk-w100{width:100%}
+  .sk-card{background:var(--panel);border-radius:var(--radius,16px);padding:18px 20px;box-shadow:var(--shadow)}
+  .sk-chart{height:180px;border-radius:12px;margin-top:12px}
+  .sk-row{display:flex;gap:12px;align-items:center}
+  .sk-img{width:64px;height:64px;border-radius:12px;flex:none}
+  .sk-btn{height:38px;border-radius:12px;flex:1}
+  .sk-pill{height:24px;width:120px;border-radius:999px}
+  .sk-boot .dg{margin-bottom:16px}
+  .sk-ocard{pointer-events:none}
+  .ws-live{display:inline-flex;align-items:center;gap:6px}
+  .ws-live .dot{width:8px;height:8px;border-radius:50%;background:var(--brand);animation:skPulse 1s ease-in-out infinite alternate}
+  @keyframes skPulse{from{opacity:.35}to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){ .sk::after{display:none} .ws-live .dot{animation:none} }
+
+  /* ===== Movimento (GSAP + ScrollTrigger, carregado depois da página) ===== */
+  .top{transition:box-shadow .25s ease}
+  .top.is-scrolled{box-shadow:0 1px 0 var(--line),0 8px 24px rgba(16,24,40,.08)}
+  .web-ocard.best .pill.ok{display:inline-block}
 </style>
 </head>
 <body>
@@ -1303,7 +1335,7 @@
   </aside>
   <main>
     <div class="top"><span class="compass mob" role="img" aria-label="Mensura"></span><h1 id="title"></h1><span class="sp"></span><div class="gsearch" role="search"><input id="gs" type="search" autocomplete="off" placeholder="Buscar item, fornecedor, pedido…  (Ctrl+K)" aria-label="Busca geral"><div id="gsr" class="gsr" hidden></div></div><button class="btn sm themebtn" id="themeBtn" type="button"></button><select id="mnav" aria-label="Ir para"></select></div>
-    <div class="content" id="view"></div>
+    <div class="content" id="view"><div class="sk-boot" aria-busy="true"><span class="sr-only" role="status">Carregando o Mensura…</span><div class="sk sk-line lg sk-w45" style="margin:4px 0 22px"></div><div class="dg c4"><div class="sk-card"><div class="sk sk-line sk-w60"></div><div class="sk sk-line lg sk-w80"></div><div class="sk sk-line sk-w45"></div></div><div class="sk-card"><div class="sk sk-line sk-w60"></div><div class="sk sk-line lg sk-w80"></div><div class="sk sk-line sk-w45"></div></div><div class="sk-card"><div class="sk sk-line sk-w60"></div><div class="sk sk-line lg sk-w80"></div><div class="sk sk-line sk-w45"></div></div><div class="sk-card"><div class="sk sk-line sk-w60"></div><div class="sk sk-line lg sk-w80"></div><div class="sk sk-line sk-w45"></div></div></div><div class="dg c2e"><div class="sk-card"><div class="sk sk-line md sk-w30"></div><div class="sk sk-line sk-w100"></div><div class="sk sk-line sk-w80"></div><div class="sk sk-line sk-w100"></div><div class="sk sk-line sk-w60"></div></div><div class="sk-card"><div class="sk sk-line md sk-w30"></div><div class="sk sk-line sk-w100"></div><div class="sk sk-line sk-w80"></div><div class="sk sk-line sk-w100"></div><div class="sk sk-line sk-w60"></div></div></div><div class="sk-card"><div class="sk sk-line md sk-w30"></div><div class="sk sk-chart"></div></div></div></div>
   </main>
 </div>
 <dialog id="dlg">
@@ -1329,6 +1361,21 @@ const toStr=v=>(v===0||v)?String(v).replace('.',','):'';
 let _n=0; const uid=()=>Date.now().toString(36)+(++_n).toString(36)+Math.random().toString(36).slice(2,5);
 const clone=o=>JSON.parse(JSON.stringify(o));
 function toast(m,undo){ const t=$('#toast'), dl=$('#dlg'); const host=dl&&dl.open?dl:document.body; if(t.parentNode!==host) host.appendChild(t); t.textContent=m; t.classList.toggle('act',!!undo); if(undo){ const b=document.createElement('button'); b.type='button'; b.className='tundo'; b.textContent='Desfazer'; b.onclick=()=>{ t.classList.remove('show'); undo(); }; t.append(' ',b); } t.classList.add('show'); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove('show'),undo?6000:3000); }
+
+/* ================= Skeleton e desenho adiado =================
+   skBlock(): placeholder de KPIs + gráfico + tabela. skOffers(): placeholder dos cartões de oferta.
+   drawSoon(): mostra o skeleton na hora e desenha o conteúdo pesado logo após o primeiro paint,
+   para a troca de tela parecer instantânea mesmo em celulares mais lentos. */
+const skCard=`<div class="sk-card"><div class="sk sk-line sk-w60"></div><div class="sk sk-line lg sk-w80"></div><div class="sk sk-line sk-w45"></div></div>`;
+const skBlock=()=>`<div aria-busy="true"><span class="sr-only" role="status">Carregando…</span><div class="dg c4">${skCard.repeat(4)}</div>
+  <div class="sk-card" style="margin-bottom:16px"><div class="sk sk-line md sk-w30"></div><div class="sk sk-chart"></div></div>
+  <div class="sk-card">${'<div class="sk sk-line sk-w100"></div>'.repeat(6)}</div></div>`;
+const skOffers=(n=6)=>`<div class="web-offers-grid" aria-hidden="true">${`<div class="web-ocard sk-ocard"><div class="sk sk-pill"></div>
+  <div class="sk-row"><div class="sk sk-img"></div><div style="flex:1"><div class="sk sk-line md sk-w100"></div><div class="sk sk-line sk-w60"></div><div class="sk sk-line sk-w45"></div></div></div>
+  <div class="sk sk-line lg sk-w45"></div><div class="sk-row"><div class="sk sk-btn"></div><div class="sk sk-btn"></div></div></div>`.repeat(n)}</div>`;
+function drawSoon(el,fn){ if(!el) return; el.innerHTML=skBlock(); el.setAttribute('aria-busy','true');
+  requestAnimationFrame(()=>setTimeout(()=>{ if(!el.isConnected) return; fn(); el.removeAttribute('aria-busy'); },0)); }
+const debounce=(fn,ms)=>{ let h; return (...a)=>{ clearTimeout(h); h=setTimeout(()=>fn(...a),ms); }; };
 
 const addDays=(s,n)=>{ const d=new Date(s+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+Math.round(n)); return d.toISOString().slice(0,10); };
 function reportDoc(title,body,print){ const css=document.querySelector('style').textContent.replace(/@media \(prefers-color-scheme: dark\)\{[\s\S]*?\}\s*\}/,'');
@@ -1843,7 +1890,7 @@ screens.quote=param=>({title:param==='new'?'Nova cotação':'Editar cotação',h
     <label class="f">Condição de pagamento<input data-h="pay" value="${esc(ed.pay)}" ${dis}></label>
     <label class="f">Prazo (dias)<input data-h="days" value="${esc(ed.days)}" style="width:90px" type="number" min="0" step="1" inputmode="numeric" ${dis}></label></div>
   <div class="row" style="margin:16px 0 8px"><h2 style="margin:0">Produtos</h2><span class="sp"></span>${edReadonly?'':'<button class="btn" data-act="addLine">+ Adicionar produto</button>'}</div>
-  <div class="scroll"><table><thead><tr><th>Produto</th><th class="num">Qtd</th><th>Unid.</th><th>Embalagem</th><th class="num">Preço unit.</th><th class="num">Desconto</th><th>Escopo</th><th class="num">Custo extra</th><th class="num" title="Imposto que ainda será somado ao preço (IPI, ICMS-ST etc.). Deixe vazio se o preço já inclui impostos.">Imposto %</th><th class="num">Total</th><th></th></tr></thead><tbody id="edLines"></tbody></table></div>
+  <div class="scroll"><table class="edtab"><thead><tr><th>Produto</th><th class="num">Qtd</th><th>Unid.</th><th>Embalagem</th><th class="num">Preço unit.</th><th class="num">Desconto</th><th>Escopo</th><th class="num">Custo extra</th><th class="num" title="Imposto que ainda será somado ao preço (IPI, ICMS-ST etc.). Deixe vazio se o preço já inclui impostos.">Imposto %</th><th class="num">Total</th><th></th></tr></thead><tbody id="edLines"></tbody></table></div>
   <div class="row" style="margin-top:14px">
     <label class="f">Frete (R$)<input data-h="freight" value="${esc(ed.freight)}" style="width:130px" inputmode="decimal" ${dis}></label>
     <label class="f">Outras despesas<input data-h="other" value="${esc(ed.other)}" style="width:130px" inputmode="decimal" ${dis}></label>
@@ -2092,7 +2139,7 @@ screens.purchases=()=>({title:'Pedidos e compras',html:()=>{
     ${dr>1?`<button class="btn" data-act="closeAllDrafts">Fechar todos os pedidos a fechar (${dr})</button>`:''}
     <span class="sp"></span><button class="btn" data-go="history">Histórico de compras</button><button class="btn pri" data-go="compare">Novo pedido pelo comparador</button></div>
   <div class="scroll"><table><thead><tr><th>Fornecedor</th><th>Data</th><th>Status</th><th>Itens</th><th>Saving</th><th>Avaliação</th><th class="num">Custo efetivo</th><th></th><th title="Selecionar para fechar em lote">Fechar</th></tr></thead><tbody>
-  ${l.map(p=>{ const d=realizedDecision(p.id), dft=p.status==='draft'; return `<tr class="click" data-go="purchase/${p.id}"><td>${esc(sName(p.sid))}</td><td>${fmtDate(p.date)}</td><td><span class="pill ${purCls[p.status]}">${purPt[p.status]}</span>${etaTag(p)}</td><td style="white-space:normal;max-width:320px">${p.lines.map(x=>esc(iName(x.iid))).join(', ')}</td><td>${d?`<span class="pill ${d.saving>=0?'ok':'bad'}">realizado ${money(d.saving)}</span>`:'<span class="muted">—</span>'}</td><td>${live(p)?evalPill(evalPurchase(p)):'—'}</td><td class="num">${money(costOf(p))}</td><td>${dft?`<button class="btn sm" data-act="closeOrder" data-id="${p.id}">Fechar</button>`:p.status==='open'?`<button class="btn sm" data-act="arrYes" data-id="${p.id}" title="Marcar que o pedido chegou: os itens entram no estoque">${sym('in')} Chegou</button>`:p.status==='cancelled'?`<button class="btn sm" data-act="restorePur" data-id="${p.id}">Reabrir</button>`:''}</td><td style="text-align:center">${dft?`<input type="checkbox" data-act="pSelToggle" data-id="${p.id}" ${pSel.has(p.id)?'checked':''} aria-label="Selecionar ${esc(sName(p.sid))} para fechar em lote">`:''}</td></tr>`; }).join('')||'<tr><td colspan="9" class="empty">Nenhum pedido ainda. Escolha os itens no <a href="#compare">comparador</a> para gerar um pedido.</td></tr>'}
+  ${l.map(p=>{ const d=realizedDecision(p.id), dft=p.status==='draft'; return `<tr class="click" data-go="purchase/${p.id}"><td>${esc(sName(p.sid))}</td><td>${fmtDate(p.date)}</td><td><span class="pill ${purCls[p.status]}">${purPt[p.status]}</span>${etaTag(p)}</td><td style="white-space:normal;min-width:220px;max-width:340px">${p.lines.map(x=>esc(iName(x.iid))).join(', ')}</td><td>${d?`<span class="pill ${d.saving>=0?'ok':'bad'}">realizado ${money(d.saving)}</span>`:'<span class="muted">—</span>'}</td><td>${live(p)?evalPill(evalPurchase(p)):'—'}</td><td class="num">${money(costOf(p))}</td><td>${dft?`<button class="btn sm" data-act="closeOrder" data-id="${p.id}">Fechar</button>`:p.status==='open'?`<button class="btn sm" data-act="arrYes" data-id="${p.id}" title="Marcar que o pedido chegou: os itens entram no estoque">${sym('in')} Chegou</button>`:p.status==='cancelled'?`<button class="btn sm" data-act="restorePur" data-id="${p.id}">Reabrir</button>`:''}</td><td style="text-align:center">${dft?`<input type="checkbox" data-act="pSelToggle" data-id="${p.id}" ${pSel.has(p.id)?'checked':''} aria-label="Selecionar ${esc(sName(p.sid))} para fechar em lote">`:''}</td></tr>`; }).join('')||'<tr><td colspan="9" class="empty">Nenhum pedido ainda. Escolha os itens no <a href="#compare">comparador</a> para gerar um pedido.</td></tr>'}
   </tbody></table></div>
   ${dr?'<p class="small muted" style="margin-top:8px">Marque a caixa no final da linha para escolher só os pedidos que você quer fechar agora, ou use “Fechar todos” para fechar de uma vez.</p>':''}`; }});
 /* ---------- Histórico de compras ---------- */
@@ -2108,7 +2155,9 @@ screens.history=()=>({title:'Histórico de compras',html:()=>`<div class="row" s
       <h2>Compras do período</h2><div class="scroll"><table><thead><tr><th>Data</th><th>Fornecedor</th><th>Item</th><th class="num">Qtd</th><th class="num">Preço unitário</th><th class="num">Preço efetivo</th><th class="num">Custo real unit.</th><th class="num">Total da linha</th><th>Origem</th></tr></thead><tbody>
       ${show.map(r=>`<tr class="click" data-go="purchase/${r.p.id}"><td>${fmtDate(r.p.date)}</td><td>${esc(sName(r.p.sid))}</td><td>${esc(iName(r.l.iid))}</td><td class="num">${numFmt(r.l.q)} ${esc(r.l.u)}</td><td class="num">${moneyU(r.l.p)}</td><td class="num">${moneyU(effUnit(r.l))}</td><td class="num">${moneyU(landedUnit(r.p,r.l))}</td><td class="num">${money(lineTotal(r.l))}</td><td>${r.p.imported?'Importado':'Pedido'}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">Nenhuma compra no filtro. Use “Importar histórico” para trazer compras antigas.</td></tr>'}</tbody></table></div>
       ${rows.length>show.length?`<div class="row" style="margin-top:10px"><button class="btn" data-act="histMore">Mostrar mais (${rows.length-show.length} restantes)</button></div>`:''}`; };
-    window._hdraw=draw; ['hq','hs','hfr','hto'].forEach(id=>$('#'+id).addEventListener(id==='hq'?'input':'change',()=>{ hf.lim=100; draw(); })); draw(); }});
+    /* Digitação na pesquisa espera 180 ms de pausa antes de redesenhar (antes redesenhava a cada tecla). */
+    const redraw=()=>{ hf.lim=100; draw(); }, redrawTyping=debounce(redraw,180);
+    window._hdraw=draw; ['hq','hs','hfr','hto'].forEach(id=>$('#'+id).addEventListener(id==='hq'?'input':'change',id==='hq'?redrawTyping:redraw)); drawSoon($('#hview'),draw); }});
 function histRows(){ const f=norm(hf.q), out=[]; DB.purchases.filter(live).forEach(p=>{ if(hf.sup&&p.sid!==hf.sup) return; if(hf.from&&p.date<hf.from) return; if(hf.to&&p.date>hf.to) return;
     p.lines.forEach(l=>{ const it=itemOf(l.iid)||{}; if(f&&!norm([it.n,it.sku,it.ean].join(' ')).includes(f)) return; out.push({p,l}); }); });
   return out.sort((a,b)=>b.p.date.localeCompare(a.p.date)||iName(a.l.iid).localeCompare(iName(b.l.iid))); }
@@ -2372,7 +2421,7 @@ screens.annual=()=>({title:'Análise anual',html:()=>{
   if(!annYear||!years.includes(annYear)) annYear=cy;
   return `<div class="row" style="margin-bottom:12px"><label class="f">Ano<select id="ay">${years.map(y=>`<option ${y===annYear?'selected':''}>${y}</option>`).join('')}</select></label><span class="sp"></span>
   <button class="btn" data-act="annCsv" style="align-self:flex-end">Exportar saving mensal (CSV)</button><button class="btn" data-act="annReport" style="align-self:flex-end">Relatório anual (imprimir / PDF)</button></div><div id="aview"></div>`; },
-  init:()=>{ const draw=()=>{ annYear=$('#ay').value; $('#aview').innerHTML=annualHtml(annYear); }; $('#ay').addEventListener('change',draw); draw(); }});
+  init:()=>{ const draw=()=>{ annYear=$('#ay').value; $('#aview').innerHTML=annualHtml(annYear); }; $('#ay').addEventListener('change',draw); drawSoon($('#aview'),draw); }});
 function annReport(){ openReport('relatorio_anual_'+annYear,'Análise anual de compras — '+annYear,annualHtml(annYear)); }
 
 /* ---------- Relatórios ---------- */
@@ -2759,10 +2808,9 @@ screens.stock=()=>({title:'Estoque agora',html:()=>{
         <div class="small muted" style="margin-top:2px">${p.lines.map(l=>esc(iName(l.iid))+' ('+qtyFmt(l.q)+' un)').join(' • ')}</div>
         <div style="margin-top:4px">${etaTag(p)}</div>
       </div>
-      <div style="text-align:right">
-        <div style="font-weight:750;font-size:15px;margin-bottom:6px">${money(costOf(p))}</div>
-        <button class="btn sm pri" data-act="arrYes" data-id="${p.id}">✓ Chegou</button>
-        <a class="btn sm" href="#purchase/${p.id}" style="text-decoration:none">Ver pedido</a>
+      <div class="st-way-act">
+        <div style="font-weight:750;font-size:15px">${money(costOf(p))}</div>
+        <div class="st-way-btns"><button type="button" class="btn sm" data-go="purchase/${p.id}">Ver pedido</button><button class="btn sm pri" data-act="arrYes" data-id="${p.id}">✓ Chegou</button></div>
       </div>
     </div>`).join('')}
   </section>`:''}
@@ -3111,7 +3159,8 @@ const gsActs={
 $('#dlg').addEventListener('close',()=>{ if(wayDirty){ wayDirty=false; setTimeout(render,0); } });
 document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.clk[data-act]')){ e.preventDefault(); e.target.click(); } });
 if(firstRun) save();
-render();
+/* O primeiro render() acontece uma única vez, no fim do script, depois que todas as telas
+   (inclusive a de busca online) estão registradas. Renderizar aqui desenhava a tela duas vezes. */
 /* ================= v21 · leitura e busca em telas com muitos dados =================
    - Toda tabela ganha ordenação ao clicar no cabeçalho.
    - Tabelas longas ganham um campo "Filtrar nesta tabela" com contagem e destaque do termo.
@@ -3152,56 +3201,7 @@ new MutationObserver(()=>{ clearTimeout(enhanceTables.h); enhanceTables.h=setTim
 enhanceTables();
 
 /* ================= v23 · arquiteturas alternativas do Início ================= */
-var DASHL='1'; try{ DASHL=new URLSearchParams(location.search).get('inicio')||localStorage.getItem('mensura_inicio')||'1'; }catch(e){}
-SYM.coin='<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.6-1-1.700-1.500-3-1.500-1.700 0-3 .900-3 2.200 0 3 6 1.300 6 4.100 0 1.300-1.300 2.200-3 2.200-1.400 0-2.600-.600-3.200-1.600M12 6v2M12 16.500V18"/>';
-SYM.save='<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>'; SYM.bell='<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'; SYM.doc='<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>'; SYM.swap='<path d="M4 8h14l-3-3M20 16H6l3 3"/>';
-function dashAlt(D){
-  const ic=(n,c)=>`<span class="ico ${c||''}">${sym(n)}</span>`;
-  const kx=(icon,l,v,n,attrs,c)=>`<div class="card kx" ${attrs||''}>${ic(icon,c)}<div style="min-width:0"><div class="l">${l}</div><div class="v">${v}</div><div class="n">${n||'&nbsp;'}</div></div></div>`;
-  const attn=`<div class="card"><div class="dh2">Precisa da sua atenção<span class="sp"></span><button class="btn sm pri" data-go="quote/new">+ Nova cotação</button></div>${D.todo.length?`<div class="todos" style="margin-top:0">${D.todo.join('')}</div>`:'<p class="muted" style="margin:0">Tudo em dia: nenhum pedido atrasado, nada acabando e nenhuma cotação esperando.</p>'}</div>`;
-  const ords=[...D.open].sort((a,b)=>(etaOf(a)||'9').localeCompare(etaOf(b)||'9'));
-  const way=n=>ords.length?ords.slice(0,n).map(p=>`<div class="li">${ic('truck',etaOf(p)&&etaOf(p)<today()?'bad':'')}<div class="t"><b>${esc(sName(p.sid))}</b><small>${p.lines.length} ${p.lines.length>1?'itens':'item'} • ${money(costOf(p))}</small>${etaTag(p)}</div><button class="btn sm" data-act="arrYes" data-id="${p.id}">Chegou</button></div>`).join(''):'<p class="muted" style="margin:0">Nenhum pedido a caminho.</p>';
-  const need=D.tr.filter(s=>s.left!=null&&['out','low','remind','soon','coming'].includes(s.status)).sort((a,b)=>a.left-b.left);
-  const rep=n=>need.length?need.slice(0,n).map(s=>{ const dias=Math.max(0,Math.round(s.left)), w=Math.min(100,Math.round(dias/30*100)), cls=s.status==='soon'||s.status==='coming'?'warn':'bad';
-    return `<div class="li" data-go="extrato/${s.iid}" style="cursor:pointer"><div class="t"><b>${esc(iName(s.iid))}</b><small>${dias<1?'acabou':'dá para ≈ '+dias+(dias===1?' dia':' dias')} • tem ≈ ${qtyFmt(s.est)} ${esc(s.u)}</small></div><span class="meter" title="Dias de estoque (escala de 30 dias)"><i class="${cls}" style="width:${Math.max(4,w)}%"></i></span>${stChip(s.status)}</div>`; }).join(''):'<p class="muted" style="margin:0">Nada para repor nas próximas semanas.</p>';
-  const chart=`<div class="card"><div class="dh2">Gasto por mês<span class="small muted" style="font-weight:400">últimos 12 meses</span><span class="sp"></span><a href="#panel">Painel de análise ›</a></div>${panelChart()}</div>`;
-  const kGasto=kx('coin','Gasto nos últimos 90 dias',money(D.gasto),'Compras efetivas'), kEco=kx('save','Economia realizada (total)',money(D.real),'Compras bem avaliadas: '+D.evS,'','ok');
-  const kWay=kx('truck','Pedidos a caminho',D.open.length,D.late.length?`<span style="color:var(--bad)">${D.late.length} com prazo vencido</span>`:'Dentro do prazo','data-act="wayOpen" role="button" tabindex="0" style="cursor:pointer" title="Ver os pedidos e marcar o que chegou"',D.late.length?'bad':'');
-  const kRep=kx('bell','Itens para repor',D.acab.length+D.soon.length,`${D.acab.length} acabando agora`,'data-go="restock" role="button" tabindex="0" style="cursor:pointer"',D.acab.length?'bad':'warn');
-  if(DASHL==='1') return `<div class="dg c4">${kGasto}${kEco}${kWay}${kRep}</div>
-    <div class="dg c2">${chart}${attn}</div>
-    <div class="dg c2e"><div class="card"><div class="dh2">${sym('truck')} A caminho<span class="sp"></span><a href="#stock">Estoque ›</a></div>${way(4)}</div>
-      <div class="card"><div class="dh2">${sym('bell')} O que acaba primeiro<span class="sp"></span><a href="#restock">Reposição ›</a></div>${rep(5)}</div></div>`;
-  if(DASHL==='2'){ const qs=DB.quotes.filter(q=>q.status==='draft'||q.status==='submitted').sort((a,b)=>b.date.localeCompare(a.date));
-    const drafts=DB.purchases.filter(p=>p.status==='draft'), zer=D.tr.filter(s=>s.est!=null&&s.est<=0), com=D.tr.filter(s=>s.est>0).length;
-    const mini=a=>a.length?`<div class="mini">${a.slice(0,3).map(x=>`<div title="${x}">${x}</div>`).join('')}${a.length>3?`<span class="muted">+ ${a.length-3}</span>`:''}</div>`:'<div class="mini"></div>';
-    const col=(n,t,big,cap,list,btn,hot)=>`<div class="card flowcol ${hot?'hot':''}"><div class="st"><span class="vn">${n}</span>${t}</div><div class="big">${big}</div><div class="cap">${cap}</div>${mini(list)}${btn}</div>`;
-    const hot=D.late.length?3:D.acab.length?5:drafts.length?2:qs.length?2:1;
-    return `<p class="pagehelp" style="margin-top:0">Seu ciclo de compra hoje, da esquerda para a direita. O quadro com contorno azul é onde há algo esperando por você.</p>
-    <div class="dg c5">
-      ${col(1,'Cotar',qs.length,qs.length===1?'cotação em aberto':'cotações em aberto',qs.map(q=>esc(sName(q.sid))+' • '+fmtDate(q.date)),'<button class="btn pri" data-go="quote/new">+ Nova cotação</button>',hot===1)}
-      ${col(2,'Comparar e pedir',drafts.length,(drafts.length===1?'pedido a fechar':'pedidos a fechar')+(qs.length?` • ${qs.length} para comparar`:''),drafts.map(p=>esc(sName(p.sid))+' • '+money(costOf(p))),'<button class="btn" data-go="compare">Abrir comparador</button>',hot===2)}
-      ${col(3,'Receber',D.open.length,D.late.length?`<span style="color:var(--bad)">${D.late.length} com prazo vencido</span>`:(D.open.length===1?'pedido a caminho':'pedidos a caminho'),ords.map(p=>esc(sName(p.sid))+(etaOf(p)?' • até '+fmtDate(etaOf(p)):'')),'<button class="btn" data-act="wayOpen">Marcar o que chegou</button>',hot===3)}
-      ${col(4,'Estoque',com,`itens com estoque${zer.length?` • ${zer.length} zerado(s)`:''}`,zer.map(s=>esc(iName(s.iid))+' • zerado'),'<button class="btn" data-go="stock">Ver estoque</button>',false)}
-      ${col(5,'Repor',D.acab.length+D.soon.length,`para repor • ${D.acab.length} acabando agora`,need.map(s=>esc(iName(s.iid))+' • '+(s.left<1?'acabou':'≈ '+Math.round(s.left)+' dias')),'<button class="btn" data-go="restock">Ver reposição</button>',hot===5)}
-    </div>
-    <div class="dg c3">${kGasto}${kEco}${D.seas?kx('bell','Melhor época em destaque',MESL[D.seas.se.best],esc(D.seas.i.n)+' ('+sg(D.seas.se.idx[D.seas.se.best])+')','data-go="restock" role="button" tabindex="0" style="cursor:pointer"'):kWay}</div>`; }
-  /* 3 · Foco */
-  const h=new Date().getHours(), oi=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
-  const acts=[]; if(D.late.length) acts.push([`${D.late.length>1?D.late.length+' pedidos passaram':'Um pedido passou'} do prazo de entrega. ${D.late.length>1?'Chegaram?':'Chegou?'}`,'Confirmar chegada','data-act="arrCheck"']);
-  if(D.acab.length) acts.push([`${D.acab.length>1?D.acab.length+' itens estão acabando':esc(iName(D.acab[0].iid))+' está acabando'}.`,'Ver reposição','data-go="restock"']);
-  if(D.drafts) acts.push([`${D.drafts>1?D.drafts+' pedidos esperam':'Um pedido espera'} ser fechado.`,'Abrir pedidos','data-go="purchases"']);
-  if(D.pend) acts.push([`${D.pend>1?D.pend+' cotações aguardam':'Uma cotação aguarda'} comparação.`,'Comparar agora','data-go="compare"']);
-  const hero=`<div class="hero"><small>${oi}! O mais importante agora:</small><div class="big">${acts.length?acts[0][0]:'Tudo em dia. Nenhum pedido atrasado e nada acabando.'}</div>${acts.length?`<button class="btn" ${acts[0][2]}>${acts[0][1]}</button>`:'<button class="btn" data-go="search">🔍 Buscar preços online</button>'}
-    ${acts.length>1?`<div class="rest">${acts.slice(1).map(a=>`<span>${a[0]} <a href="#" ${a[2]} onclick="return false">${a[1]} ›</a></span>`).join('')}</div>`:''}</div>`;
-  const cnt=k=>D.tr.filter(s=>k.includes(s.status)).length, parts=[['Em dia',cnt(['ok']),'var(--ok)'],['Repor em breve',cnt(['soon']),'#d9952b'],['Pedido a caminho',cnt(['coming']),'var(--brand)'],['Acabando ou esgotado',cnt(['out','low','remind']),'var(--bad)']], tot=parts.reduce((s,p)=>s+p[1],0)||1;
-  const health=`<div class="card"><div class="dh2">Saúde do estoque<span class="sp"></span><a href="#stock">Estoque ›</a></div><div class="seg5" role="img" aria-label="${parts.map(p=>p[1]+' '+p[0]).join(', ')}">${parts.map(p=>p[1]?`<i style="width:${p[1]/tot*100}%;background:${p[2]}"></i>`:'').join('')}</div><div class="lg">${parts.map(p=>`<span style="--c:${p[2]}">${p[0]}<b>${p[1]}</b></span>`).join('')}</div></div>`;
-  return `<div class="dg c2">${hero}<div style="display:grid;gap:16px">${kEco}${kGasto}</div></div>
-    <div class="dg c3">${health}<div class="card"><div class="dh2">${sym('truck')} Próximas entregas</div>${way(3)}</div>
-      <div class="card"><div class="dh2">Atalhos</div><div class="qa"><button class="btn pri" data-go="quote/new">+ Nova cotação</button><button class="btn" data-go="compare">Comparar</button><button class="btn" data-go="stock">Registrar saída</button><button class="btn" data-go="history">Ver compras</button></div>
-        ${D.seas?`<div class="li" style="margin-top:12px;border-top:1px solid var(--line)" data-go="restock"><div class="t"><small>Melhor época em destaque</small><b>${MESL[D.seas.se.best]} • ${esc(D.seas.i.n)}</b><small>${sg(D.seas.se.idx[D.seas.se.best])} em relação à média do ano</small></div></div>`:''}</div></div>
-    <div class="dg c2">${chart}<div class="card"><div class="dh2">${sym('bell')} O que acaba primeiro<span class="sp"></span><a href="#restock">Reposição ›</a></div>${rep(4)}</div></div>`;
-}
+SYM.bell='<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'; SYM.doc='<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>'; SYM.swap='<path d="M4 8h14l-3-3M20 16H6l3 3"/>';
 (function(){
   const root=document.documentElement;
   root.setAttribute('data-theme','light');
@@ -3301,8 +3301,14 @@ function siteHostOf(url, fallback){
   return String(fallback || 'Site oficial').trim();
 }
 
+/* Só aceita links http(s). Bloqueia "javascript:", "data:" etc. vindos de lojas ou APIs externas (XSS). */
+function safeHttpUrl(u){
+  try { const p = new URL(String(u || '').trim()); return (p.protocol === 'https:' || p.protocol === 'http:') ? p.href : ''; }
+  catch(e){ return ''; }
+}
+
 function unwrapStoreUrl(rawUrl, titulo, loja){
-  let u = String(rawUrl || '').trim();
+  let u = safeHttpUrl(rawUrl);
   const isGoogle = (s) => {
     try {
       const h = new URL(s).hostname.toLowerCase();
@@ -3339,8 +3345,6 @@ function unwrapStoreUrl(rawUrl, titulo, loja){
 }
 try { WSEARCH.apiUrl = localStorage.getItem('mensura_api_url') || ''; } catch(e) {}
 
-function ensureWebInit(){ /* Mantém a barra de busca limpa até o usuário digitar ou clicar em uma sugestão */ }
-
 function selectWebItem(iid, autoRun){
   const it = itemOf(iid);
   if(!it) return;
@@ -3351,37 +3355,88 @@ function selectWebItem(iid, autoRun){
   if(autoRun) runWebSearch();
 }
 
-/* Gerador de ofertas de mercado realistas e consistentes baseadas no histórico do item quando a API externa não responde ou para atacado B2B */
-function buildMarketOffersFor(term, it){
-  const baseHist = it ? observations(it.id) : [];
-  const basePrice = baseHist.length ? wavg(baseHist.slice(-8)) : 12.50;
-  const u = it ? (it.u || 'un') : 'un';
-  const pk = it && it.pk ? ` (${it.pk})` : '';
-  const qSlug = encodeURIComponent(term.replace(/\s+/g, '-'));
-  const qEnc = encodeURIComponent(term);
-  const stores = [
-    {loja: 'Mercado Livre • Atacado Full', mult: 0.93, days: 2, pay: 'À vista / Pix', link: 'https://lista.mercadolivre.com.br/' + qSlug},
-    {loja: 'Amazon Brasil • Suprimentos', mult: 0.96, days: 3, pay: 'À vista / Cartão', link: 'https://www.amazon.com.br/s?k=' + qEnc},
-    {loja: 'Atacadão Online', mult: 1.01, days: 4, pay: 'Pix / Boleto', link: 'https://www.atacadao.com.br/s?q=' + qEnc},
-    {loja: 'Magazine Luiza', mult: 1.05, days: 1, pay: 'Cartão / Pix', link: 'https://www.magazineluiza.com.br/busca/' + qEnc + '/'},
-    {loja: 'Shopee Brasil', mult: 1.09, days: 5, pay: 'Pix / Parcelado', link: 'https://shopee.com.br/search?keyword=' + qEnc}
-  ];
-  const lastBuy = it ? observations(it.id).filter(o => o.src === 'Compra').slice(-1)[0] : null;
-  const lastSupName = lastBuy ? sName(lastBuy.sid) : null;
-  const res = stores.map((s, idx) => ({
-    id: 'w_' + idx,
-    titulo: `${term}${pk}`,
-    preco: r2(Math.max(0.05, basePrice * s.mult)),
-    loja: (idx === 1 && lastSupName) ? lastSupName : s.loja,
-    prevBought: (idx === 1 && !!lastSupName),
-    days: s.days,
-    pay: s.pay,
-    link_compra: s.link,
-    url_imagem: null
-  }));
-  return res.sort((a,b) => a.preco - b.preco);
+/* ===== Cache local das buscas (stale-while-revalidate) =====
+   Uma busca já feita aparece na hora, sem esperar o servidor; em paralelo o app busca de novo e
+   troca os cartões quando a resposta nova chega. Guarda as 25 buscas mais recentes por até 24 h. */
+const WCACHE_KEY = 'mensura_wcache', WCACHE_TTL = 24 * 3600e3, WCACHE_MAX = 25;
+const wcacheKey = (term, reg) => norm(term) + '|' + (reg || '');
+function wcacheAll(){ try { const o = JSON.parse(localStorage.getItem(WCACHE_KEY) || '{}'); return (o && typeof o === 'object') ? o : {}; } catch(e){ return {}; } }
+function wcacheGet(k){ const e = wcacheAll()[k]; return (e && Array.isArray(e.results) && Date.now() - e.at < WCACHE_TTL) ? e : null; }
+function wcacheSet(k, results, label){
+  const all = wcacheAll(); all[k] = {at: Date.now(), results, label};
+  const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at);
+  keys.slice(WCACHE_MAX).forEach(x => delete all[x]);
+  try { localStorage.setItem(WCACHE_KEY, JSON.stringify(all)); } catch(e) {}
+}
+const hhmm = t => new Date(t).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+
+function apiBaseUrl(){
+  const useSameOrigin = (typeof location !== 'undefined' && /^https?:/.test(location.protocol));
+  return WSEARCH.apiUrl
+    ? (WSEARCH.apiUrl.endsWith('/') ? WSEARCH.apiUrl : WSEARCH.apiUrl + '/')
+    : (useSameOrigin ? '/' : '');
 }
 
+/* fetch com tempo-limite: o servidor gratuito do Render pode demorar a acordar; não deixa a tela presa. */
+async function fetchTimeout(url, ms){
+  const ctl = new AbortController(), h = setTimeout(() => ctl.abort(), ms);
+  try { return await fetch(url, {signal: ctl.signal}); } finally { clearTimeout(h); }
+}
+
+/* Consulta as fontes de ofertas e devolve {list, label}. Não mexe na tela. */
+async function fetchWebOffers(term){
+  const apiBase = apiBaseUrl();
+  if(apiBase){
+    try {
+      const regParam = WSEARCH.regiao ? ('&regiao=' + encodeURIComponent(WSEARCH.regiao)) : '';
+      const res = await fetchTimeout(apiBase + 'api/ml/buscar?q=' + encodeURIComponent(term) + '&limite=10&permitir_contingencia=false' + regParam, 25000);
+      if(res.ok){
+        const payload = await res.json();
+        const rows = Array.isArray(payload) ? payload : (Array.isArray(payload && payload.ofertas) ? payload.ofertas : (Array.isArray(payload && payload.resultados) ? payload.resultados : []));
+        const list = rows.map((p, idx) => {
+          const lojaNome = p.loja_origem || p.loja || 'Loja Online';
+          const vend = p.vendedor && p.vendedor !== lojaNome ? (' • ' + p.vendedor) : '';
+          const freteTxt = p.frete_gratis ? 'Frete grátis' : (p.condicao_pagamento || 'Online / Pix');
+          const link = unwrapStoreUrl(p.link_compra || '', p.titulo || term, lojaNome + vend);
+          return {
+            id: p.id_externo || ('api_' + idx),
+            titulo: p.titulo || term,
+            preco: r2(Number(p.preco) || 0),
+            loja: lojaNome + vend,
+            days: Number(p.prazo_estimado_dias) > 0 ? Number(p.prazo_estimado_dias) : (WSEARCH.days || 3),
+            pay: p.logistica_full ? ('Full • ' + freteTxt) : freteTxt,
+            link_compra: link,
+            site: p.site_dominio || siteHostOf(link, lojaNome),
+            url_imagem: p.url_imagem || null
+          };
+        }).filter(x => x.preco > 0);
+        if(list.length) return {list, label: 'Backend Mensura (Google Shopping / API)'};
+      }
+    } catch(e) {}
+  }
+  try {
+    const mlRes = await fetchTimeout('https://api.mercadolibre.com/sites/MLB/search?q=' + encodeURIComponent(term) + '&limit=8', 12000);
+    if(mlRes.ok){
+      const mlData = await mlRes.json();
+      if(mlData && Array.isArray(mlData.results) && mlData.results.length){
+        const list = mlData.results.slice(0, 8).map((item, idx) => ({
+          id: 'ml_' + idx,
+          titulo: item.title || term,
+          preco: Number(item.price) || 0,
+          loja: (item.seller && item.seller.nickname) ? 'Mercado Livre • ' + item.seller.nickname : 'Mercado Livre',
+          days: item.shipping && item.shipping.free_shipping ? 2 : 4,
+          pay: 'À vista / Parcelado',
+          link_compra: safeHttpUrl(item.permalink),
+          url_imagem: item.thumbnail || null
+        })).filter(x => x.preco > 0);
+        if(list.length) return {list, label: 'Varredura ao vivo (API Mercado Livre)'};
+      }
+    }
+  } catch(e) {}
+  return {list: [], label: ''};
+}
+
+let wsToken = 0;
 async function runWebSearch(){
   const qIn = $('#wsQ'), qtyIn = $('#wsQty'), dIn = $('#wsDays'), iIn = $('#wsItem'), apiIn = $('#wsApi'), regIn = $('#wsRegiao');
   if(regIn) { WSEARCH.regiao = regIn.value.trim(); try{localStorage.setItem('mensura_regiao', WSEARCH.regiao);}catch(e){} }
@@ -3394,80 +3449,39 @@ async function runWebSearch(){
   const it = itemOf(WSEARCH.iid);
   const term = (WSEARCH.q || (it ? it.n : '')).trim(); if(!term){ toast('Digite o nome de um item ou clique em uma sugestão.'); return; }
   WSEARCH.q = term;
-  WSEARCH.loading = true;
-  WSEARCH.sourceMsg = 'Varrendo preços na internet…';
-  if($('#wsResults')) drawWebSearchBody();
-
-  let list = [];
-  let sourceLabel = '';
-
-  /* 1. Tenta o Backend FastAPI (/api/ml/buscar) automaticamente via mesma origem (/api) ou URL customizada */
-  const useSameOrigin = (typeof location !== 'undefined' && /^https?:/.test(location.protocol));
-  const apiBase = WSEARCH.apiUrl
-    ? (WSEARCH.apiUrl.endsWith('/') ? WSEARCH.apiUrl : WSEARCH.apiUrl + '/')
-    : (useSameOrigin ? '/' : '');
-  if(apiBase){
-    try {
-      const regParam = WSEARCH.regiao ? ('&regiao=' + encodeURIComponent(WSEARCH.regiao)) : '';
-      const res = await fetch(apiBase + 'api/ml/buscar?q=' + encodeURIComponent(term) + '&limite=10&permitir_contingencia=false' + regParam);
-      if(res.ok){
-        const payload = await res.json();
-        const rows = Array.isArray(payload) ? payload : (Array.isArray(payload && payload.ofertas) ? payload.ofertas : (Array.isArray(payload && payload.resultados) ? payload.resultados : []));
-        if(rows.length){
-          list = rows.map((p, idx) => {
-            const lojaNome = p.loja_origem || p.loja || 'Loja Online';
-            const vend = p.vendedor && p.vendedor !== lojaNome ? (' • ' + p.vendedor) : '';
-            const freteTxt = p.frete_gratis ? 'Frete grátis' : (p.condicao_pagamento || 'Online / Pix');
-            return {
-              id: p.id_externo || ('api_' + idx),
-              titulo: p.titulo || term,
-              preco: r2(Number(p.preco) || 0),
-              loja: lojaNome + vend,
-              days: Number(p.prazo_estimado_dias) > 0 ? Number(p.prazo_estimado_dias) : (WSEARCH.days || 3),
-              pay: p.logistica_full ? ('Full • ' + freteTxt) : freteTxt,
-              link_compra: unwrapStoreUrl(p.link_compra || '', p.titulo || term, lojaNome + vend),
-              site: p.site_dominio || siteHostOf(unwrapStoreUrl(p.link_compra || '', p.titulo || term, lojaNome + vend), lojaNome),
-              url_imagem: p.url_imagem || null
-            };
-          }).filter(x => x.preco > 0);
-          sourceLabel = 'Backend Mensura (Google Shopping / API)';
-        }
-      }
-    } catch(e) {}
-  }
-
-  /* 2. Consulta concorrente na API pública do Mercado Livre + Catálogo B2B */
-  if(!list.length){
-    try {
-      const mlRes = await fetch('https://api.mercadolibre.com/sites/MLB/search?q=' + encodeURIComponent(term) + '&limit=8');
-      if(mlRes.ok){
-        const mlData = await mlRes.json();
-        if(mlData && Array.isArray(mlData.results) && mlData.results.length){
-          list = mlData.results.slice(0, 8).map((item, idx) => ({
-            id: 'ml_' + idx,
-            titulo: item.title || term,
-            preco: Number(item.price) || 0,
-            loja: (item.seller && item.seller.nickname) ? 'Mercado Livre • ' + item.seller.nickname : 'Mercado Livre',
-            days: item.shipping && item.shipping.free_shipping ? 2 : 4,
-            pay: 'À vista / Parcelado',
-            link_compra: item.permalink || '',
-            url_imagem: item.thumbnail || null
-          })).filter(x => x.preco > 0);
-          sourceLabel = 'Varredura ao vivo (API Mercado Livre)';
-        }
-      }
-    } catch(e) {}
-  }
-
-  /* 3. Exibe exclusivamente ofertas reais (sem injetar ofertas simuladas de preço fixo) */
-  WSEARCH.searched = true;
-  WSEARCH.results = list.sort((a,b) => (Number(a.preco) || 0) - (Number(b.preco) || 0));
-  WSEARCH.loading = false;
   const regLabel = WSEARCH.regiao ? ` • Região: ${WSEARCH.regiao}` : ' • Brasil todo';
-  WSEARCH.sourceMsg = WSEARCH.results.length
-    ? `${WSEARCH.results.length} ofertas reais encontradas (${sourceLabel}${regLabel}) — ordenadas por preço`
-    : `Nenhuma oferta real encontrada para "${term}" no momento.`;
+  const key = wcacheKey(term, WSEARCH.regiao), cached = wcacheGet(key), token = ++wsToken;
+
+  /* Mostra na hora o que já temos: o resultado salvo desta busca, ou o skeleton enquanto busca. */
+  if(cached){
+    WSEARCH.results = cached.results.slice(); WSEARCH.searched = true; WSEARCH.loading = false; WSEARCH.refreshing = true;
+    WSEARCH.sourceMsg = `${cached.results.length} ofertas da busca das ${hhmm(cached.at)}${regLabel}`;
+  } else {
+    WSEARCH.loading = true; WSEARCH.refreshing = false; WSEARCH.sourceMsg = 'Varrendo preços na internet…';
+  }
   if($('#wsResults')) drawWebSearchBody();
+
+  const {list, label} = await fetchWebOffers(term);
+  if(token !== wsToken) return; /* uma busca mais nova começou: ignora esta resposta atrasada */
+
+  WSEARCH.searched = true; WSEARCH.loading = false; WSEARCH.refreshing = false;
+  if(list.length){
+    WSEARCH.results = list.sort((a,b) => (Number(a.preco) || 0) - (Number(b.preco) || 0));
+    wcacheSet(key, WSEARCH.results, label);
+    WSEARCH.sourceMsg = `${WSEARCH.results.length} ofertas reais encontradas (${label}${regLabel}) — ordenadas por preço`;
+  } else if(cached){
+    WSEARCH.sourceMsg = `Não foi possível atualizar agora — mostrando ${cached.results.length} ofertas da busca das ${hhmm(cached.at)}${regLabel}`;
+  } else {
+    WSEARCH.results = [];
+    WSEARCH.sourceMsg = `Nenhuma oferta real encontrada para "${term}" no momento.`;
+  }
+  if($('#wsResults')) drawWebSearchBody();
+}
+
+/* Acorda o servidor gratuito do Render logo que o app abre, para a primeira busca não esperar ~30 s. */
+function warmBackend(){
+  const base = apiBaseUrl(); if(!base) return;
+  fetchTimeout(base + 'api/status', 60000).catch(() => {});
 }
 
 /* Fecha pedido automaticamente a partir da oferta escolhida na internet e já registra a compra e entrada no estoque */
@@ -3535,6 +3549,9 @@ function finalizeOnlinePurchase(offersToBuy, statusMode){
 function drawWebSearchBody(){
   const box = $('#wsResults');
   if(!box) return;
+  /* Assinatura do conteúdo: o módulo de animação só anima os cartões quando as ofertas mudam
+     (e não a cada tecla digitada na quantidade, que também redesenha esta área). */
+  box.dataset.sig = WSEARCH.loading ? 'loading' : WSEARCH.results.map(o => o.id + ':' + o.preco).join('|') + '|' + WSEARCH.sortBy + '|' + (WSEARCH.maxDays || 0);
   const it = itemOf(WSEARCH.iid);
   const u = it ? (it.u || 'un') : 'un';
   const hist = it ? observations(it.id) : [];
@@ -3542,9 +3559,11 @@ function drawWebSearchBody(){
   const qty = WSEARCH.qty > 0 ? WSEARCH.qty : 1;
 
   if(WSEARCH.loading){
-    box.innerHTML = `<div class="card empty">🔍 Consultando provedores e varrendo ofertas para <b>${esc(WSEARCH.q)}</b>…</div>`;
+    box.innerHTML = `<div class="row" style="margin-bottom:10px" role="status" aria-live="polite"><span class="small muted ws-live"><span class="dot" aria-hidden="true"></span><b>Buscando ofertas para “${esc(WSEARCH.q)}” em lojas online…</b></span></div>${skOffers(6)}`;
+    box.setAttribute('aria-busy', 'true');
     return;
   }
+  box.removeAttribute('aria-busy');
   if(!WSEARCH.results.length){
     box.innerHTML = WSEARCH.searched
       ? `<div class="card empty">Nenhuma oferta real encontrada para <b>${esc(WSEARCH.q)}</b> no momento. Tente outro termo ou aguarde alguns segundos caso o servidor esteja iniciando.</div>`
@@ -3586,7 +3605,8 @@ function drawWebSearchBody(){
       offTag = `<span class="web-off-badge up">+${pct(diffPct)} acima da última compra</span>`;
     }
 
-    const siteName = siteHostOf(o.link_compra, o.site || o.loja);
+    const link = safeHttpUrl(o.link_compra);
+    const siteName = siteHostOf(link, o.site || o.loja);
     const showSeller = o.loja && norm(o.loja) !== norm(siteName) && !norm(siteName).includes(norm(o.loja));
     return `<div class="web-ocard ${isBest ? 'best' : ''} ${inBasket ? 'picked' : ''}">
       <div class="row" style="gap:6px">
@@ -3594,11 +3614,11 @@ function drawWebSearchBody(){
         ${isBest ? '<span class="pill ok">★ Menor preço</span>' : ''}
         ${o.prevBought ? '<span class="chip blue">✓ Comprou da última vez</span>' : ''}
         <span class="sp"></span>
-        ${o.link_compra ? `<a href="${esc(o.link_compra)}" target="_blank" rel="noopener noreferrer" class="small" style="font-weight:700">Ir ao site ↗</a>` : ''}
+        ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="small" style="font-weight:700">Ir ao site ↗</a>` : ''}
       </div>
 
       <div class="web-ocard-head">
-        ${o.url_imagem ? `<img class="web-ocard-img" src="${esc(o.url_imagem)}" alt="">` : `<div class="web-ocard-img">📦</div>`}
+        ${safeHttpUrl(o.url_imagem) || /^data:image\//.test(o.url_imagem || '') ? `<img class="web-ocard-img" src="${esc(o.url_imagem)}" alt="" width="64" height="64" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : `<div class="web-ocard-img" aria-hidden="true">📦</div>`}
         <div style="flex:1;min-width:0">
           <div class="web-ocard-title">${esc(o.titulo)}</div>
           ${showSeller ? `<div class="web-seller-sub">Fornecedor/Loja: <b>${esc(o.loja)}</b></div>` : ''}
@@ -3671,8 +3691,9 @@ function drawWebSearchBody(){
   }
 
   box.innerHTML = `${timingHtml}
-  <div class="row" style="margin-bottom:10px">
+  <div class="row" style="margin-bottom:10px" role="status" aria-live="polite">
     <span class="small muted"><b>${esc(WSEARCH.sourceMsg)}</b></span>
+    ${WSEARCH.refreshing ? '<span class="chip blue ws-live"><span class="dot" aria-hidden="true"></span>Atualizando preços…</span>' : ''}
     <span class="sp"></span>
     ${maxSaving > 0 ? `<span class="chip ok">${hasQty ? 'Economia potencial no lote' : 'Diferença entre ofertas'}: <b>${money(maxSaving)}${hasQty ? '' : '/un'}</b></span>` : ''}
   </div>
@@ -3685,7 +3706,6 @@ WSEARCH.maxDays = 0;
 screens.search = () => ({
   title: 'Buscar Preços e Comprar',
   html: () => {
-    ensureWebInit();
     const it = itemOf(WSEARCH.iid);
     const urgent = trackedItems().map(i => ({i, s: stockInfo(i.id)})).filter(x => ['out','low','remind','soon'].includes(x.s.status)).sort((a,b) => (a.s.left??999)-(b.s.left??999));
     return `<div class="web-search-box">
@@ -3767,9 +3787,6 @@ screens.search = () => ({
         else if(e.key === 'Escape'){ acBox.hidden = true; }
       });
     }
-    document.addEventListener('click', e => {
-      if(acBox && !e.target.closest('.ws-ac-wrap')) acBox.hidden = true;
-    });
     if(qtyIn) qtyIn.addEventListener('input', () => {
       const raw = qtyIn.value.trim();
       if(!raw){ WSEARCH.qty = ''; drawWebSearchBody(); return; }
@@ -3806,9 +3823,15 @@ screens.search = () => ({
   }
 });
 
+/* Fecha o autocompletar da busca ao clicar fora. Registrado uma única vez (antes era a cada render da tela). */
+document.addEventListener('click', e => {
+  const acBox = document.getElementById('wsAcList');
+  if(acBox && !e.target.closest('.ws-ac-wrap')) acBox.hidden = true;
+});
+
 function openInstantBuyModal(entries){
   const tot = entries.reduce((s, e) => s + r2(e.offer.preco * e.qty), 0);
-  const firstLink = (entries.find(e => e.offer && e.offer.link_compra)?.offer.link_compra) || '';
+  const firstLink = entries.map(e => safeHttpUrl(e.offer && e.offer.link_compra)).find(Boolean) || '';
   openModal('Registrar Compra e Ir para a Loja', `
     <p style="margin:0">Ao confirmar, o Mensura <b>fecha e registra o pedido automaticamente</b> no seu controle de <b>Estoque</b> e abre o site da loja em nova aba para você finalizar o pagamento por lá:</p>
     <div class="scroll"><table class="cmp-fit"><thead><tr><th>Item</th><th>Loja / Fonte</th><th class="num">Qtd</th><th class="num">Unitário</th><th class="num">Total</th></tr></thead><tbody>
@@ -3853,8 +3876,11 @@ Object.assign(gsActs, {
       render();
       return;
     }
-    selectWebItem(id, true);
+    /* Desenha a tela uma vez com o item escolhido e só então busca: antes a busca desenhava o
+       "carregando" e logo em seguida o render() apagava e redesenhava tudo. */
+    selectWebItem(id, false);
     render();
+    runWebSearch();
   },
   wsToggleSeason: () => { WSEARCH.showSeason = !WSEARCH.showSeason; drawWebSearchBody(); },
   wsBuyNow: el => {
@@ -3898,6 +3924,98 @@ Object.assign(gsActs, {
 
 document.documentElement.setAttribute('data-aux', 'slate');
 render();
+
+/* Tarefas não essenciais só rodam depois que a página carregou e o navegador ficou ocioso. */
+const whenIdle = cb => ('requestIdleCallback' in window) ? requestIdleCallback(cb, {timeout: 3000}) : setTimeout(cb, 1200);
+const afterLoad = cb => (document.readyState === 'complete') ? whenIdle(cb) : addEventListener('load', () => whenIdle(cb), {once: true});
+afterLoad(warmBackend);
+
+/* ================= Movimento: GSAP + ScrollTrigger =================
+   - Scripts de terceiros só são baixados depois do carregamento, com o navegador ocioso, e com SRI
+     (o navegador recusa o arquivo se o CDN for adulterado).
+   - Nada depende deles para aparecer: sem GSAP (CDN fora, bloqueador) o app funciona igual.
+   - "Reduzir movimento" do sistema: os scripts nem são baixados.
+   - Regra: rolar a página nunca esconde conteúdo. Os cartões já estão prontos quando entram na tela.
+     O movimento fica só no que muda de estado: as barras do gráfico crescem quando o gráfico
+     aparece, as ofertas da busca entram quando chegam do servidor e a barra do topo ganha sombra
+     ao rolar. */
+const GSAP_SRC = [
+  ['https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js', 'sha384-XmJ9SoHtVOHoQUcKvFAzVXwdkKo1Ie3bhmSoIAkcdsHGaIrVJIkmozyq0FJeb/Ly'],
+  ['https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js', 'sha384-wl5TeDVvOWt30Pbf8aSo2ZrzsOjddu3avOBvHe+p+OhJt9gP6w9YXmDkN5DK2/dF'],
+];
+function loadScript(src, integrity){
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = true; s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer';
+    if(integrity) s.integrity = integrity;
+    s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  });
+}
+
+const Motion = (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const desk = matchMedia('(min-width: 901px)');
+  let on = false, topST = null;
+
+  const scroller = () => desk.matches ? document.querySelector('main') : window;
+  const inView = el => { const r = el.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; };
+
+  /* Barras crescem a partir da base. Fora da tela, o gráfico continua inteiro e visível; a animação
+     só roda quando a primeira parte dele entra na tela (start: 'top bottom'). */
+  function bars(svg){
+    const rects = svg.querySelectorAll('.mbar-rect'); if(!rects.length) return;
+    const play = () => gsap.from(rects, {scaleY: 0, transformOrigin: '50% 100%', duration: .5, ease: 'power3.out', stagger: .015, clearProps: 'transform'});
+    inView(svg) ? play() : ScrollTrigger.create({trigger: svg, scroller: scroller(), start: 'top bottom', once: true, onEnter: play});
+  }
+
+  function charts(root){
+    root.querySelectorAll('.mchart-svg').forEach(svg => { if(svg.dataset.anim) return; svg.dataset.anim = '1'; bars(svg); });
+  }
+
+  /* Ofertas que acabaram de chegar: entrada curta, sem esconder nada além do instante da chegada. */
+  function offers(box){
+    const cards = box.querySelectorAll('.web-ocard:not(.sk-ocard)'); if(!cards.length) return;
+    gsap.from(cards, {opacity: 0, y: 8, duration: .28, ease: 'power3.out', stagger: .04, clearProps: 'opacity,transform'});
+  }
+
+  function topBar(){
+    if(topST) topST.kill();
+    topST = ScrollTrigger.create({scroller: scroller(), start: 8, end: 'max', toggleClass: {targets: '.top', className: 'is-scrolled'}});
+  }
+
+  function cleanup(){ ScrollTrigger.getAll().forEach(t => { if(t !== topST && t.trigger && !t.trigger.isConnected) t.kill(); }); }
+
+  function start(){
+    if(on || reduce.matches || !window.gsap || !window.ScrollTrigger) return;
+    gsap.registerPlugin(ScrollTrigger);
+    on = true;
+    const view = document.getElementById('view');
+    view.querySelectorAll('.mchart-svg').forEach(svg => { svg.dataset.anim = '1'; }); /* já visíveis antes do GSAP chegar */
+    topBar();
+    new MutationObserver(recs => {
+      if(!on) return;
+      cleanup();
+      const boxes = new Set();
+      for(const r of recs){
+        r.addedNodes.forEach(n => { if(n.nodeType === 1) charts(n); });
+        const box = r.target.closest && r.target.closest('[data-sig]');
+        if(box && box.dataset.sig !== 'loading' && box.dataset.sig !== box.dataset.animSig){ box.dataset.animSig = box.dataset.sig; boxes.add(box); }
+      }
+      boxes.forEach(offers);
+    }).observe(view, {childList: true, subtree: true});
+    desk.addEventListener('change', () => { cleanup(); topBar(); ScrollTrigger.refresh(); });
+    reduce.addEventListener('change', () => { if(reduce.matches){ on = false; ScrollTrigger.getAll().forEach(t => t.kill()); gsap.globalTimeline.progress(1); } });
+  }
+
+  return {start, reduce};
+})();
+
+afterLoad(() => {
+  if(Motion.reduce.matches) return;
+  GSAP_SRC.reduce((p, [src, sri]) => p.then(() => loadScript(src, sri)), Promise.resolve())
+    .then(Motion.start)
+    .catch(() => { /* sem animação, o app segue normal */ });
+});
 
 /* === Interatividade global dos graficos Mensura (hover tooltip + clique para detalhar) === */
 (function initMensuraInteractiveCharts(){

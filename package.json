@@ -1,0 +1,13 @@
+{
+  "name": "mensura-tests",
+  "private": true,
+  "description": "Bateria de testes de interface (Playwright) do Mensura. Não faz parte do deploy.",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:api": "python -m pytest tests/api -q",
+    "test": "npm run test:api && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}
